@@ -1,30 +1,45 @@
 import React from 'react';
-import { TouchableOpacity, Text } from 'react-native';
+import { TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
   variant?: 'primary' | 'secondary' | 'danger';
   disabled?: boolean;
+  loading?: boolean;
 }
 
-const Button: React.FC<ButtonProps> = ({ title, onPress, variant = 'primary', disabled = false }) => {
-  // Ensure disabled is boolean
-  const isDisabled = Boolean(disabled);
-
+/**
+ * Reusable Button Component
+ */
+const Button: React.FC<ButtonProps> = ({ 
+  title, 
+  onPress, 
+  variant = 'primary',
+  disabled = false,
+  loading = false 
+}) => {
+  const isDisabled = disabled || loading;
+  
   const variants = {
-    primary: "bg-indigo-600",
-    secondary: "bg-emerald-500",
-    danger: "bg-red-500",
+    primary: 'bg-indigo-600',
+    secondary: 'bg-emerald-500',
+    danger: 'bg-red-500',
   };
 
   return (
     <TouchableOpacity
       onPress={onPress}
-      disabled={isDisabled} // boolean only
-      className={`p-4 rounded-lg items-center justify-center m-2 shadow-sm ${variants[variant]} ${isDisabled ? "opacity-50" : ""}`}
+      disabled={isDisabled}
+      className={`p-4 rounded-lg items-center justify-center m-2 ${variants[variant]} ${
+        isDisabled ? 'opacity-50' : ''
+      }`}
     >
-      <Text className="text-white font-bold text-base">{title}</Text>
+      {loading ? (
+        <ActivityIndicator color="white" />
+      ) : (
+        <Text className="text-white font-bold text-base">{title}</Text>
+      )}
     </TouchableOpacity>
   );
 };

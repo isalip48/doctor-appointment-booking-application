@@ -1,15 +1,24 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { View, FlatList, Text, Alert, TouchableOpacity } from "react-native";
+import {
+  View,
+  FlatList,
+  Text,
+  Alert,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSlotSearch } from "@/hooks/queries/useSlots";
 import { useCreateBooking } from "@/hooks/mutations/useCreateBooking";
 import SlotCard from "@/components/slot/SlotCard";
 import Loader from "@/components/common/Loader";
 import Button from "@/components/common/Button";
+import Header from "@/components/common/Header";
+import EmptyState from "@/components/common/EmptyState";
 import { Slot } from "@/api/types";
 import { format, addDays } from "date-fns";
-import { useState } from "react";
-
+import { useState, useMemo } from "react";
+import { isWeb } from "@/utils/platform";
 /**
  * Slot Search Screen
  *
@@ -24,14 +33,12 @@ const SlotSearchScreen = () => {
   const { doctorId, doctorName, hospitalId, hospitalName } =
     useLocalSearchParams();
 
-  // Default to today
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy-MM-dd"),
   );
 
   const doctorIdNum =
     typeof doctorId === "string" ? Number(doctorId) : undefined;
-
   const hospitalIdNum =
     typeof hospitalId === "string" ? Number(hospitalId) : undefined;
     
@@ -42,7 +49,6 @@ const SlotSearchScreen = () => {
     date: selectedDate,
   });
 
-  // Book mutation
   const { mutate: book, isPending: isBooking } = useCreateBooking();
 
   /**
@@ -63,14 +69,12 @@ const SlotSearchScreen = () => {
             book(
               {
                 slotId: slot.id,
-                userId: 1, // TODO: Get from auth context
+                userId: 1,
                 patientNotes: "",
               },
               {
                 onSuccess: () => {
-                  onSuccess: () => {
-                    router.push("/my-bookings");
-                  };
+                  router.push("/bookings");
                 },
               },
             );
@@ -80,10 +84,7 @@ const SlotSearchScreen = () => {
     );
   };
 
-  /**
-   * Generate next 7 days for date selector
-   */
-  const getNext7Days = () => {
+  const next7Days = useMemo(() => {
     const days = [];
     for (let i = 0; i < 7; i++) {
       const date = addDays(new Date(), i);
@@ -94,28 +95,118 @@ const SlotSearchScreen = () => {
       });
     }
     return days;
-  };
+  }, []);
 
   if (isLoading) return <Loader message="Searching slots..." />;
 
+  // Web Layout
+  if (isWeb) {
+    return (
+      <View className="flex-1 bg-gray-50">
+        <ScrollView className="flex-1">
+          <View className="max-w-6xl mx-auto w-full px-6 py-8">
+            {/* Header */}
+            <View className="mb-6">
+              <h1 className="text-4xl font-bold text-gray-800 mb-2">
+                {doctorName || "All Doctors"}
+              </h1>
+              {hospitalName && (
+                <p className="text-gray-600 text-lg">{hospitalName}</p>
+              )}
+            </View>
+
+            {/* Date Selector - Grid for Web */}
+            <View className="bg-white p-4 mb-6 rounded-lg shadow-sm">
+              <Text className="text-lg font-bold text-gray-700 mb-3">
+                Select Date:
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                {next7Days.map((item) => (
+                  <TouchableOpacity
+                    key={item.date}
+                    onPress={() => setSelectedDate(item.date)}
+                    className={`px-6 py-3 rounded-lg ${
+                      selectedDate === item.date
+                        ? "bg-indigo-600"
+                        : "bg-gray-200"
+                    }`}
+                  >
+                    <Text
+                      className={`text-center font-bold ${
+                        selectedDate === item.date
+                          ? "text-white"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      {item.display}
+                    </Text>
+                    {item.isToday && (
+                      <Text
+                        className={`text-xs text-center mt-1 ${
+                          selectedDate === item.date
+                            ? "text-white"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        Today
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Slots Grid */}
+            <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {slots && slots.length > 0 ? (
+                slots.map((slot) => (
+                  <SlotCard
+                    key={slot.id}
+                    slot={slot}
+                    onPress={handleSlotPress}
+                  />
+                ))
+              ) : (
+                <View className="col-span-full">
+                  <EmptyState
+                    icon="📅"
+                    title={`No available slots for ${selectedDate}`}
+                    subtitle="Try selecting a different date"
+                  />
+                </View>
+              )}
+            </View>
+
+            {/* View Bookings Button */}
+            <View className="mt-6">
+              <Button
+                title="View My Bookings"
+                onPress={() => router.push("/bookings")}
+                variant="secondary"
+              />
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // Mobile/Native Layout
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
-      {/* Header */}
-      <View className="bg-white p-4 shadow-sm">
-        <Text className="text-2xl font-bold text-gray-800">
-          {doctorName || "All Doctors"}
-        </Text>
-        {hospitalName && <Text className="text-gray-600">{hospitalName}</Text>}
-      </View>
+      <Header
+        title={doctorName?.toString() || "All Doctors"}
+        subtitle={hospitalName?.toString()}
+      />
 
-      {/* Date Selector */}
+      {/* Date Selector - Horizontal Scroll for Mobile */}
       <View className="bg-white p-3 m-2 rounded-lg">
         <Text className="text-sm font-bold text-gray-700 mb-2">
           Select Date:
         </Text>
         <FlatList
           horizontal
-          data={getNext7Days()}
+          data={next7Days}
           keyExtractor={(item) => item.date}
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -155,18 +246,17 @@ const SlotSearchScreen = () => {
         )}
         contentContainerStyle={{ paddingBottom: 20 }}
         ListEmptyComponent={
-          <View className="flex-1 justify-center items-center p-10">
-            <Text className="text-gray-500 text-center">
-              No available slots for {selectedDate}
-            </Text>
-          </View>
+          <EmptyState
+            icon="📅"
+            title={`No available slots for ${selectedDate}`}
+            subtitle="Try selecting a different date"
+          />
         }
       />
 
-      {/* View Bookings Button */}
       <Button
         title="View My Bookings"
-        onPress={() => router.push("/my-bookings")}
+        onPress={() => router.push("/bookings")}
         variant="secondary"
       />
     </SafeAreaView>

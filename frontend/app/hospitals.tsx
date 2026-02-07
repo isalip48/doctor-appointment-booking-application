@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { View, FlatList, Text, TextInput } from "react-native";
+import { View, FlatList, Text, TextInput, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useHospitals, useSearchHospitals } from "@/hooks/queries/useHospitals";
 import HospitalCard from "@/components/hospital/HospitalCard";
 import Loader from "@/components/common/Loader";
+import EmptyState from "@/components/common/EmptyState";
 import { Hospital } from "@/api/types";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
+import { isWeb } from "@/utils/platform";
 
 /**
  * Hospital List Screen
@@ -36,7 +38,7 @@ const HospitalListScreen = () => {
    */
   const handleHospitalPress = (hospital: Hospital) => {
     router.push({
-      pathname: "/doctor-list",
+      pathname: "/doctors",
       params: {
         hospitalId: hospital.id.toString(),
         hospitalName: hospital.name,
@@ -46,6 +48,58 @@ const HospitalListScreen = () => {
 
   if (isLoading) return <Loader message="Loading hospitals..." />;
 
+  // Web Layout
+  if (isWeb) {
+    return (
+      <View className="flex-1 bg-gray-50">
+        <ScrollView className="flex-1">
+          <View className="max-w-6xl mx-auto w-full px-6 py-8">
+            {/* Web Header */}
+            <View className="mb-6">
+              <h1 className="text-4xl font-bold text-gray-800 mb-4">
+                Select Hospital
+              </h1>
+
+              {/* Search Bar */}
+              <TextInput
+                placeholder="Search hospitals..."
+                value={searchTerm}
+                onChangeText={setSearchTerm}
+                className="bg-white p-4 rounded-xl text-gray-800 shadow-sm border border-gray-200"
+              />
+            </View>
+
+            {/* Grid Layout for Web */}
+            <View className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {hospitals && hospitals.length > 0 ? (
+                hospitals.map((hospital) => (
+                  <HospitalCard
+                    key={hospital.id}
+                    hospital={hospital}
+                    onPress={handleHospitalPress}
+                  />
+                ))
+              ) : (
+                <View className="col-span-full">
+                  <EmptyState
+                    icon="🏥"
+                    title={
+                      searchTerm
+                        ? "No hospitals found"
+                        : "No hospitals available"
+                    }
+                    subtitle="Try a different search term"
+                  />
+                </View>
+              )}
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // Mobile/Native Layout
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
       {/* Header */}
@@ -72,11 +126,11 @@ const HospitalListScreen = () => {
         )}
         contentContainerStyle={{ paddingBottom: 20 }}
         ListEmptyComponent={
-          <View className="flex-1 justify-center items-center p-10">
-            <Text className="text-gray-500 text-center">
-              {searchTerm ? "No hospitals found" : "No hospitals available"}
-            </Text>
-          </View>
+          <EmptyState
+            icon="🏥"
+            title={searchTerm ? "No hospitals found" : "No hospitals available"}
+            subtitle="Try a different search term"
+          />
         }
       />
     </SafeAreaView>

@@ -1,13 +1,22 @@
 import React from "react";
-import { View, Text, FlatList, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Alert,
+  ScrollView,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { apiClient } from "@/api/client";
 import { useQuery } from "@tanstack/react-query";
 import { Slot } from "@/api/types";
 import Loader from "@/components/common/Loader";
+import EmptyState from "@/components/common/EmptyState";
 import { useCreateBooking } from "@/hooks/mutations/useCreateBooking";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { isWeb } from "@/utils/platform";
 
 const SlotResultsScreen = () => {
   const router = useRouter();
@@ -45,12 +54,12 @@ const SlotResultsScreen = () => {
             book(
               {
                 slotId: slot.id,
-                userId: 1, // TODO: Get from auth
+                userId: 1,
                 patientNotes: "",
               },
               {
                 onSuccess: () => {
-                  router.push("/my-bookings");
+                  router.push("/bookings");
                 },
               },
             );
@@ -62,6 +71,55 @@ const SlotResultsScreen = () => {
 
   if (isLoading) return <Loader message="Searching available slots..." />;
 
+  // Web Layout
+  if (isWeb) {
+    return (
+      <View className="flex-1 bg-gray-50">
+        <ScrollView className="flex-1">
+          <View className="max-w-6xl mx-auto w-full px-6 py-8">
+            {/* Header */}
+            <View className="mb-6">
+              <TouchableOpacity onPress={() => router.back()} className="mb-4">
+                <Text className="text-indigo-600 text-lg font-semibold">
+                  ← Back
+                </Text>
+              </TouchableOpacity>
+              <h1 className="text-4xl font-bold text-gray-800 mb-2">
+                Available Slots
+              </h1>
+              <p className="text-gray-600 text-lg">
+                {selectedDate} • {searchQuery}
+              </p>
+            </View>
+
+            {/* Slots Grid */}
+            <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {slots && slots.length > 0 ? (
+                slots.map((slot) => (
+                  <ModernSlotCard
+                    key={slot.id}
+                    slot={slot}
+                    onBook={handleBookSlot}
+                    isBooking={isBooking}
+                  />
+                ))
+              ) : (
+                <View className="col-span-full">
+                  <EmptyState
+                    icon="😔"
+                    title="No Slots Available"
+                    subtitle="Try searching for a different date or doctor"
+                  />
+                </View>
+              )}
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // Mobile/Native Layout
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
@@ -91,24 +149,17 @@ const SlotResultsScreen = () => {
         )}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
         ListEmptyComponent={
-          <View className="bg-white rounded-2xl p-8 items-center">
-            <Text className="text-6xl mb-4">😔</Text>
-            <Text className="text-gray-800 font-bold text-lg mb-2">
-              No Slots Available
-            </Text>
-            <Text className="text-gray-600 text-center">
-              Try searching for a different date or doctor
-            </Text>
-          </View>
+          <EmptyState
+            icon="😔"
+            title="No Slots Available"
+            subtitle="Try searching for a different date or doctor"
+          />
         }
       />
     </SafeAreaView>
   );
 };
 
-/**
- * Modern Slot Card Component
- */
 const ModernSlotCard = ({
   slot,
   onBook,
@@ -122,11 +173,9 @@ const ModernSlotCard = ({
 
   return (
     <View className="bg-white rounded-2xl shadow-sm mb-4 overflow-hidden">
-      {/* Top colored bar */}
       <View className={`h-2 ${isAvailable ? "bg-green-500" : "bg-red-500"}`} />
 
       <View className="p-5">
-        {/* Doctor & Hospital */}
         <View className="flex-row justify-between items-start mb-4">
           <View className="flex-1">
             <Text className="text-xl font-bold text-gray-800 mb-1">
@@ -140,7 +189,6 @@ const ModernSlotCard = ({
             </Text>
           </View>
 
-          {/* Availability Badge */}
           <View
             className={`px-3 py-1 rounded-full ${
               isAvailable ? "bg-green-100" : "bg-red-100"
@@ -156,7 +204,6 @@ const ModernSlotCard = ({
           </View>
         </View>
 
-        {/* Time Info */}
         <View className="bg-gray-50 rounded-xl p-4 mb-4">
           <View className="flex-row justify-between items-center mb-2">
             <Text className="text-gray-600 text-sm">Next Available:</Text>
@@ -173,7 +220,6 @@ const ModernSlotCard = ({
           </View>
         </View>
 
-        {/* Stats Row */}
         <View className="flex-row justify-between mb-4">
           <View className="items-center">
             <Text className="text-gray-500 text-xs">Start Time</Text>
@@ -197,7 +243,6 @@ const ModernSlotCard = ({
           </View>
         </View>
 
-        {/* Book Button */}
         {isAvailable ? (
           <TouchableOpacity
             onPress={() => onBook(slot)}

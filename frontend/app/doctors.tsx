@@ -1,12 +1,15 @@
 import React, { useState } from "react";
-import { View, FlatList, Text, TouchableOpacity } from "react-native";
+import { FlatList, View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useDoctors } from "@/hooks/queries/useDoctors";
-import { useSpecializations } from "@/hooks/queries/useDoctors";
+import { router, useLocalSearchParams } from "expo-router";
+import { useDoctors, useSpecializations } from "@/hooks/queries/useDoctors";
 import DoctorCard from "@/components/doctor/DoctorCard";
 import Loader from "@/components/common/Loader";
+import Header from "@/components/common/Header";
+import EmptyState from "@/components/common/EmptyState";
+import SpecializationFilter from "@/components/doctor/SpecializationFilter";
 import { Doctor } from "@/api/types";
-import { router, useLocalSearchParams, useRouter } from "expo-router";
+import { isWeb } from "@/utils/platform";
 
 /**
  * Doctor List Screen
@@ -22,7 +25,6 @@ const DoctorListScreen = () => {
     string | undefined
   >();
 
-  // Fetch doctors with filters
   const hospitalIdNum =
     typeof hospitalId === "string" ? Number(hospitalId) : undefined;
 
@@ -52,68 +54,68 @@ const DoctorListScreen = () => {
 
   if (isLoading) return <Loader message="Loading doctors..." />;
 
+  // Web Layout
+  if (isWeb) {
+    return (
+      <View className="flex-1 bg-gray-50">
+        <ScrollView className="flex-1">
+          <View className="max-w-6xl mx-auto w-full px-6 py-8">
+            {/* Web Header */}
+            <View className="mb-6">
+              <h1 className="text-4xl font-bold text-gray-800 mb-2">
+                {hospitalName || "All Doctors"}
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Select a doctor to view available slots
+              </p>
+            </View>
+
+            <SpecializationFilter
+              specializations={specializations}
+              selectedSpecialization={selectedSpecialization}
+              onSelect={setSelectedSpecialization}
+            />
+
+            {/* Grid Layout for Web */}
+            <View className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+              {doctors && doctors.length > 0 ? (
+                doctors.map((doctor) => (
+                  <DoctorCard
+                    key={doctor.id}
+                    doctor={doctor}
+                    onPress={handleDoctorPress}
+                  />
+                ))
+              ) : (
+                <View className="col-span-full">
+                  <EmptyState
+                    icon="👨‍⚕️"
+                    title="No doctors found"
+                    subtitle="Try adjusting your filters"
+                  />
+                </View>
+              )}
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // Mobile/Native Layout
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
-      {/* Header */}
-      <View className="bg-white p-4 shadow-sm">
-        <Text className="text-2xl font-bold text-gray-800">
-          {hospitalName || "All Doctors"}
-        </Text>
-        <Text className="text-gray-600">
-          Select a doctor to view available slots
-        </Text>
-      </View>
+      <Header
+        title={hospitalName?.toString() || "All Doctors"}
+        subtitle="Select a doctor to view available slots"
+      />
 
-      {/* Specialization Filter */}
-      <View className="bg-white p-3 m-2 rounded-lg">
-        <Text className="text-sm font-bold text-gray-700 mb-2">
-          Filter by Specialization:
-        </Text>
-        <View className="flex-row flex-wrap">
-          {/* All button */}
-          <TouchableOpacity
-            onPress={() => setSelectedSpecialization(undefined)}
-            className={`px-4 py-2 rounded-full m-1 ${
-              !selectedSpecialization ? "bg-indigo-600" : "bg-gray-200"
-            }`}
-          >
-            <Text
-              className={
-                !selectedSpecialization
-                  ? "text-white font-bold"
-                  : "text-gray-700"
-              }
-            >
-              All
-            </Text>
-          </TouchableOpacity>
+      <SpecializationFilter
+        specializations={specializations}
+        selectedSpecialization={selectedSpecialization}
+        onSelect={setSelectedSpecialization}
+      />
 
-          {/* Specialization buttons */}
-          {specializations?.map((spec) => (
-            <TouchableOpacity
-              key={spec}
-              onPress={() => setSelectedSpecialization(spec)}
-              className={`px-4 py-2 rounded-full m-1 ${
-                selectedSpecialization === spec
-                  ? "bg-indigo-600"
-                  : "bg-gray-200"
-              }`}
-            >
-              <Text
-                className={
-                  selectedSpecialization === spec
-                    ? "text-white font-bold"
-                    : "text-gray-700"
-                }
-              >
-                {spec}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      {/* Doctor List */}
       <FlatList
         data={doctors || []}
         keyExtractor={(item) => item.id.toString()}
@@ -122,11 +124,11 @@ const DoctorListScreen = () => {
         )}
         contentContainerStyle={{ paddingBottom: 20 }}
         ListEmptyComponent={
-          <View className="flex-1 justify-center items-center p-10">
-            <Text className="text-gray-500 text-center">
-              No doctors found with selected filters
-            </Text>
-          </View>
+          <EmptyState
+            icon="👨‍⚕️"
+            title="No doctors found"
+            subtitle="Try adjusting your filters"
+          />
         }
       />
     </SafeAreaView>

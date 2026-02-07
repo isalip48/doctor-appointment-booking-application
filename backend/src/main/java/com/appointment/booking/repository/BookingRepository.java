@@ -1,15 +1,16 @@
 package com.appointment.booking.repository;
 
-import com.appointment.booking.entity.Booking;
-import com.appointment.booking.entity.User;
-import com.appointment.booking.entity.Booking.BookingStatus;
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
-import java.util.List;
+import com.appointment.booking.entity.Booking;
+import com.appointment.booking.entity.Booking.BookingStatus;
+import com.appointment.booking.entity.User;
 
 /**
  * Booking Repository
@@ -51,7 +52,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "WHERE b.user.id = :userId " +
            "AND b.status = 'CONFIRMED' " +
            "AND s.slotDate >= :today " +
-           "ORDER BY s.slotDate, s.startTime")
+           "ORDER BY s.slotDate, s.consultationStartTime")
     List<Booking> findUpcomingBookingsByUser(
         @Param("userId") Long userId,
         @Param("today") LocalDate today
@@ -66,7 +67,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b JOIN b.slot s " +
            "WHERE b.user.id = :userId " +
            "AND s.slotDate < :today " +
-           "ORDER BY s.slotDate DESC, s.startTime DESC")
+           "ORDER BY s.slotDate DESC, s.consultationStartTime DESC")
     List<Booking> findPastBookingsByUser(
         @Param("userId") Long userId,
         @Param("today") LocalDate today

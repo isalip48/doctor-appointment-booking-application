@@ -1,43 +1,52 @@
-import React, { useState } from 'react';
-import { View, FlatList, Text, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useDoctors } from '@/hooks/queries/useDoctors';
-import { useSpecializations } from '@/hooks/queries/useDoctors';
-import DoctorCard from '@/components/doctor/DoctorCard';
-import Loader from '@/components/common/Loader';
-import { Doctor } from '@/api/types';
+import React, { useState } from "react";
+import { View, FlatList, Text, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useDoctors } from "@/hooks/queries/useDoctors";
+import { useSpecializations } from "@/hooks/queries/useDoctors";
+import DoctorCard from "@/components/doctor/DoctorCard";
+import Loader from "@/components/common/Loader";
+import { Doctor } from "@/api/types";
+import { router, useLocalSearchParams, useRouter } from "expo-router";
 
 /**
  * Doctor List Screen
- * 
+ *
  * FEATURES:
  * - Lists doctors (optionally filtered by hospital)
  * - Filter by specialization
  * - Navigate to slot search on doctor select
  */
-const DoctorListScreen = ({ route, navigation }: any) => {
-  const { hospitalId, hospitalName } = route.params || {};
-  const [selectedSpecialization, setSelectedSpecialization] = useState<string | undefined>();
-  
+const DoctorListScreen = () => {
+  const { hospitalId, hospitalName } = useLocalSearchParams();
+  const [selectedSpecialization, setSelectedSpecialization] = useState<
+    string | undefined
+  >();
+
   // Fetch doctors with filters
+  const hospitalIdNum =
+    typeof hospitalId === "string" ? Number(hospitalId) : undefined;
+
   const { data: doctors, isLoading } = useDoctors({
-    hospitalId,
+    hospitalId: hospitalIdNum,
     specialization: selectedSpecialization,
   });
-  
+
   // Fetch specializations for filter
   const { data: specializations } = useSpecializations();
-  
+
   /**
    * Handle doctor selection
    * Navigate to slot search for this doctor
    */
   const handleDoctorPress = (doctor: Doctor) => {
-    navigation.navigate('SlotSearch', {
-      doctorId: doctor.id,
-      doctorName: doctor.name,
-      hospitalId: doctor.hospital.id,
-      hospitalName: doctor.hospital.name,
+    router.push({
+      pathname: "/slot-search",
+      params: {
+        doctorId: doctor.id.toString(),
+        doctorName: doctor.name,
+        hospitalId: doctor.hospital.id.toString(),
+        hospitalName: doctor.hospital.name,
+      },
     });
   };
 
@@ -48,9 +57,11 @@ const DoctorListScreen = ({ route, navigation }: any) => {
       {/* Header */}
       <View className="bg-white p-4 shadow-sm">
         <Text className="text-2xl font-bold text-gray-800">
-          {hospitalName || 'All Doctors'}
+          {hospitalName || "All Doctors"}
         </Text>
-        <Text className="text-gray-600">Select a doctor to view available slots</Text>
+        <Text className="text-gray-600">
+          Select a doctor to view available slots
+        </Text>
       </View>
 
       {/* Specialization Filter */}
@@ -63,24 +74,38 @@ const DoctorListScreen = ({ route, navigation }: any) => {
           <TouchableOpacity
             onPress={() => setSelectedSpecialization(undefined)}
             className={`px-4 py-2 rounded-full m-1 ${
-              !selectedSpecialization ? 'bg-indigo-600' : 'bg-gray-200'
+              !selectedSpecialization ? "bg-indigo-600" : "bg-gray-200"
             }`}
           >
-            <Text className={!selectedSpecialization ? 'text-white font-bold' : 'text-gray-700'}>
+            <Text
+              className={
+                !selectedSpecialization
+                  ? "text-white font-bold"
+                  : "text-gray-700"
+              }
+            >
               All
             </Text>
           </TouchableOpacity>
-          
+
           {/* Specialization buttons */}
           {specializations?.map((spec) => (
             <TouchableOpacity
               key={spec}
               onPress={() => setSelectedSpecialization(spec)}
               className={`px-4 py-2 rounded-full m-1 ${
-                selectedSpecialization === spec ? 'bg-indigo-600' : 'bg-gray-200'
+                selectedSpecialization === spec
+                  ? "bg-indigo-600"
+                  : "bg-gray-200"
               }`}
             >
-              <Text className={selectedSpecialization === spec ? 'text-white font-bold' : 'text-gray-700'}>
+              <Text
+                className={
+                  selectedSpecialization === spec
+                    ? "text-white font-bold"
+                    : "text-gray-700"
+                }
+              >
                 {spec}
               </Text>
             </TouchableOpacity>

@@ -1,19 +1,20 @@
 package com.appointment.booking.entity;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
-/**
- * Booking Entity
- * 
- * WHAT: Represents a confirmed appointment booking
- * WHY: Links a user to a specific slot, creating an appointment
- * 
- * BUSINESS RULES:
- * - One user can book multiple slots (different dates/doctors)
- * - One slot can have multiple bookings (up to totalSlots limit)
- * - Bookings can be CONFIRMED, CANCELLED, or COMPLETED
- */
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
 @Entity
 @Table(name = "bookings")
 public class Booking {
@@ -22,63 +23,47 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    /**
-     * WHY ManyToOne: Many bookings belong to one user
-     * EAGER: We always want to know who booked (small data, needed often)
-     */
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
     
-    /**
-     * WHY ManyToOne: Many bookings can be for the same slot
-     * EXAMPLE: Slot has totalSlots=3, so 3 bookings can reference it
-     * EAGER: We need slot details (time, doctor) when showing bookings
-     */
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "slot_id", nullable = false)
     private Slot slot;
     
-    /**
-     * WHY LocalDateTime: Stores when the booking was made (audit trail)
-     * EXAMPLE: "Booked on 2024-02-04 at 10:30 AM"
-     */
     @Column(nullable = false)
     private LocalDateTime bookingTime;
     
     /**
-     * WHY Enum: Limited, predefined states prevent invalid data
-     * STRING storage: Stores "CONFIRMED" in DB (readable in SQL queries)
+     * NEW: Store the actual appointment time when booked
+     * This is the nextAvailableTime at the moment of booking
      */
+    @Column(nullable = false)
+    private LocalTime appointmentTime;
+    
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private BookingStatus status = BookingStatus.CONFIRMED;
     
     public enum BookingStatus {
-        CONFIRMED,   // Booking is active
-        CANCELLED,   // User cancelled
-        COMPLETED,   // Appointment finished
-        NO_SHOW      // User didn't show up
+        CONFIRMED,
+        CANCELLED,
+        COMPLETED,
+        NO_SHOW
     }
     
-    /**
-     * WHY: Store patient-specific notes or symptoms
-     * NULLABLE: Not all bookings need notes
-     */
     private String patientNotes;
-    
-    /**
-     * WHY: For future payment integration
-     */
     private Double amountPaid;
     
     // Constructors
     public Booking() {}
     
-    public Booking(User user, Slot slot, LocalDateTime bookingTime, BookingStatus status) {
+    public Booking(User user, Slot slot, LocalDateTime bookingTime, 
+                   LocalTime appointmentTime, BookingStatus status) {
         this.user = user;
         this.slot = slot;
         this.bookingTime = bookingTime;
+        this.appointmentTime = appointmentTime;
         this.status = status;
     }
     
@@ -94,6 +79,9 @@ public class Booking {
     
     public LocalDateTime getBookingTime() { return bookingTime; }
     public void setBookingTime(LocalDateTime bookingTime) { this.bookingTime = bookingTime; }
+    
+    public LocalTime getAppointmentTime() { return appointmentTime; }
+    public void setAppointmentTime(LocalTime appointmentTime) { this.appointmentTime = appointmentTime; }
     
     public BookingStatus getStatus() { return status; }
     public void setStatus(BookingStatus status) { this.status = status; }

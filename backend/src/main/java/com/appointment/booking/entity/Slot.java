@@ -1,128 +1,194 @@
 package com.appointment.booking.entity;
 
-import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+
 /**
- * Slot Entity
+ * Updated Slot Entity - NEW LOGIC
  * 
- * WHY: Represents an available time slot for appointments
- * KEY CONCEPT: Each slot has a date, time, and limited capacity
+ * KEY CHANGES:
+ * - ONE slot per doctor per day (not multiple time slots)
+ * - 30 bookings capacity per day
+ * - 10 minutes per patient
+ * - Auto-calculates next available time
  */
 @Entity
-@Table(name = "slots", 
-    uniqueConstraints = @UniqueConstraint(columnNames = {"doctor_id", "slot_date", "start_time"}))
+@Table(name = "slots", uniqueConstraints = @UniqueConstraint(columnNames = { "doctor_id", "slot_date" }))
 public class Slot {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    /**
-     * WHY LocalDate: Stores date without time (2024-02-04)
-     * Better than String for date operations and queries
-     */
+
     @Column(nullable = false)
     private LocalDate slotDate;
-    
+
     /**
-     * WHY LocalTime: Stores time without date (09:00:00)
-     * Allows easy time comparisons and formatting
+     * When doctor starts consultations for the day
+     * Example: 09:00
      */
     @Column(nullable = false)
-    private LocalTime startTime;
-    
-    @Column(nullable = false)
-    private LocalTime endTime;
-    
+    private LocalTime consultationStartTime;
+
     /**
-     * Total slots available for this time
-     * WHY: Some doctors can see multiple patients at the same time
+     * Maximum bookings per day
+     * Fixed at 30
      */
     @Column(nullable = false)
-    private Integer totalSlots = 1;
-    
+    private Integer maxBookingsPerDay = 30;
+
     /**
-     * How many slots are already booked
+     * Current number of bookings
      */
     @Column(nullable = false)
-    private Integer bookedSlots = 0;
-    
+    private Integer currentBookings = 0;
+
     /**
-     * Computed field: slot is available if bookedSlots < totalSlots
-     * WHY Boolean: Easy to query "give me all available slots"
+     * Time per patient in minutes
+     * Fixed at 10
      */
+    @Column(nullable = false)
+    private Integer minutesPerPatient = 10;
+
     @Column(nullable = false)
     private Boolean isAvailable = true;
-    
-    /**
-     * WHY ManyToOne: Many slots belong to one doctor
-     */
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "doctor_id", nullable = false)
     private Doctor doctor;
-    
+
     // Constructors
-    public Slot() {}
-    
-    public Slot(Long id, LocalDate slotDate, LocalTime startTime, LocalTime endTime, 
-                Integer totalSlots, Integer bookedSlots, Doctor doctor) {
+    public Slot() {
+    }
+
+    public Slot(Long id, LocalDate slotDate, LocalTime consultationStartTime, Doctor doctor) {
         this.id = id;
         this.slotDate = slotDate;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.totalSlots = totalSlots;
-        this.bookedSlots = bookedSlots;
+        this.consultationStartTime = consultationStartTime;
         this.doctor = doctor;
-        this.isAvailable = bookedSlots < totalSlots;
+        this.maxBookingsPerDay = 30;
+        this.currentBookings = 0;
+        this.minutesPerPatient = 10;
+        this.isAvailable = true;
     }
-    
+
     /**
-     * BUSINESS LOGIC: Book a slot
-     * WHY: Keep business logic in entity to ensure consistency
+     * Calculate next available appointment time
+     * Formula: startTime + (currentBookings * minutesPerPatient)
+     */
+    public LocalTime getNextAvailableTime() {
+        return consultationStartTime.plusMinutes((long) currentBookings * minutesPerPatient);
+    }
+
+    /**
+     * Calculate estimated end time for the day
+     */
+    public LocalTime getEstimatedEndTime() {
+        return consultationStartTime.plusMinutes((long) maxBookingsPerDay * minutesPerPatient);
+    }
+
+    /**
+     * Calculate remaining slots
+     */
+    public Integer getRemainingSlots() {
+        return maxBookingsPerDay - currentBookings;
+    }
+
+    /**
+     * Book a slot - increments counter
      */
     public boolean bookSlot() {
-        if (bookedSlots < totalSlots) {
-            bookedSlots++;
-            isAvailable = bookedSlots < totalSlots;
+        if (currentBookings < maxBookingsPerDay) {
+            currentBookings++;
+            isAvailable = currentBookings < maxBookingsPerDay;
             return true;
         }
         return false;
     }
-    
+
     /**
-     * BUSINESS LOGIC: Cancel a booking
+     * Cancel a booking - decrements counter
      */
     public void cancelSlot() {
-        if (bookedSlots > 0) {
-            bookedSlots--;
+        if (currentBookings > 0) {
+            currentBookings--;
             isAvailable = true;
         }
     }
-    
+
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    
-    public LocalDate getSlotDate() { return slotDate; }
-    public void setSlotDate(LocalDate slotDate) { this.slotDate = slotDate; }
-    
-    public LocalTime getStartTime() { return startTime; }
-    public void setStartTime(LocalTime startTime) { this.startTime = startTime; }
-    
-    public LocalTime getEndTime() { return endTime; }
-    public void setEndTime(LocalTime endTime) { this.endTime = endTime; }
-    
-    public Integer getTotalSlots() { return totalSlots; }
-    public void setTotalSlots(Integer totalSlots) { this.totalSlots = totalSlots; }
-    
-    public Integer getBookedSlots() { return bookedSlots; }
-    public void setBookedSlots(Integer bookedSlots) { this.bookedSlots = bookedSlots; }
-    
-    public Boolean getIsAvailable() { return isAvailable; }
-    public void setIsAvailable(Boolean isAvailable) { this.isAvailable = isAvailable; }
-    
-    public Doctor getDoctor() { return doctor; }
-    public void setDoctor(Doctor doctor) { this.doctor = doctor; }
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public LocalDate getSlotDate() {
+        return slotDate;
+    }
+
+    public void setSlotDate(LocalDate slotDate) {
+        this.slotDate = slotDate;
+    }
+
+    public LocalTime getConsultationStartTime() {
+        return consultationStartTime;
+    }
+
+    public void setConsultationStartTime(LocalTime consultationStartTime) {
+        this.consultationStartTime = consultationStartTime;
+    }
+
+    public Integer getMaxBookingsPerDay() {
+        return maxBookingsPerDay;
+    }
+
+    public void setMaxBookingsPerDay(Integer maxBookingsPerDay) {
+        this.maxBookingsPerDay = maxBookingsPerDay;
+    }
+
+    public Integer getCurrentBookings() {
+        return currentBookings;
+    }
+
+    public void setCurrentBookings(Integer currentBookings) {
+        this.currentBookings = currentBookings;
+    }
+
+    public Integer getMinutesPerPatient() {
+        return minutesPerPatient;
+    }
+
+    public void setMinutesPerPatient(Integer minutesPerPatient) {
+        this.minutesPerPatient = minutesPerPatient;
+    }
+
+    public Boolean getIsAvailable() {
+        return isAvailable;
+    }
+
+    public void setIsAvailable(Boolean isAvailable) {
+        this.isAvailable = isAvailable;
+    }
+
+    public Doctor getDoctor() {
+        return doctor;
+    }
+
+    public void setDoctor(Doctor doctor) {
+        this.doctor = doctor;
+    }
 }

@@ -1,57 +1,35 @@
 package com.appointment.booking.dto;
 
-/**
- * Slot Data Transfer Object
- * 
- * WHY: Combines slot timing + doctor info + hospital info
- * USAGE: Main DTO for slot search results
- */
 public class SlotDTO {
     private Long id;
-    
-    /**
-     * WHY String: Easier for frontend to display (no date parsing needed)
-     * FORMAT: "2024-02-05"
-     * Backend stores as LocalDate, converts to String here
-     */
     private String slotDate;
-    
-    /**
-     * WHY String: Frontend displays "09:00 AM" directly
-     * FORMAT: "09:00" or "09:00 AM" (we'll format in service layer)
-     */
-    private String startTime;
-    private String endTime;
-    
-    /**
-     * CAPACITY INFO: Frontend shows "2 of 5 slots available"
-     */
-    private Integer totalSlots;
-    private Integer bookedSlots;
-    private Integer availableSlots; // Calculated: totalSlots - bookedSlots
-    
+    private String consultationStartTime;
+    private String nextAvailableTime;      // NEW: Calculated next available time
+    private String estimatedEndTime;       // NEW: When consultation ends for the day
+    private Integer maxBookingsPerDay;
+    private Integer currentBookings;
+    private Integer remainingSlots;        // NEW: How many slots left
+    private Integer minutesPerPatient;
     private Boolean isAvailable;
-    
-    /**
-     * NESTED DTOs: Complete information in one response
-     * Frontend gets: slot time + doctor details + hospital location
-     */
     private DoctorSummaryDTO doctor;
     private HospitalDTO hospital;
     
-    // Constructors
     public SlotDTO() {}
     
-    public SlotDTO(Long id, String slotDate, String startTime, String endTime,
-                   Integer totalSlots, Integer bookedSlots, Integer availableSlots,
+    public SlotDTO(Long id, String slotDate, String consultationStartTime, 
+                   String nextAvailableTime, String estimatedEndTime,
+                   Integer maxBookingsPerDay, Integer currentBookings, 
+                   Integer remainingSlots, Integer minutesPerPatient,
                    Boolean isAvailable, DoctorSummaryDTO doctor, HospitalDTO hospital) {
         this.id = id;
         this.slotDate = slotDate;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.totalSlots = totalSlots;
-        this.bookedSlots = bookedSlots;
-        this.availableSlots = availableSlots;
+        this.consultationStartTime = consultationStartTime;
+        this.nextAvailableTime = nextAvailableTime;
+        this.estimatedEndTime = estimatedEndTime;
+        this.maxBookingsPerDay = maxBookingsPerDay;
+        this.currentBookings = currentBookings;
+        this.remainingSlots = remainingSlots;
+        this.minutesPerPatient = minutesPerPatient;
         this.isAvailable = isAvailable;
         this.doctor = doctor;
         this.hospital = hospital;
@@ -64,20 +42,40 @@ public class SlotDTO {
     public String getSlotDate() { return slotDate; }
     public void setSlotDate(String slotDate) { this.slotDate = slotDate; }
     
-    public String getStartTime() { return startTime; }
-    public void setStartTime(String startTime) { this.startTime = startTime; }
+    public String getConsultationStartTime() { return consultationStartTime; }
+    public void setConsultationStartTime(String consultationStartTime) { 
+        this.consultationStartTime = consultationStartTime; 
+    }
     
-    public String getEndTime() { return endTime; }
-    public void setEndTime(String endTime) { this.endTime = endTime; }
+    public String getNextAvailableTime() { return nextAvailableTime; }
+    public void setNextAvailableTime(String nextAvailableTime) { 
+        this.nextAvailableTime = nextAvailableTime; 
+    }
     
-    public Integer getTotalSlots() { return totalSlots; }
-    public void setTotalSlots(Integer totalSlots) { this.totalSlots = totalSlots; }
+    public String getEstimatedEndTime() { return estimatedEndTime; }
+    public void setEstimatedEndTime(String estimatedEndTime) { 
+        this.estimatedEndTime = estimatedEndTime; 
+    }
     
-    public Integer getBookedSlots() { return bookedSlots; }
-    public void setBookedSlots(Integer bookedSlots) { this.bookedSlots = bookedSlots; }
+    public Integer getMaxBookingsPerDay() { return maxBookingsPerDay; }
+    public void setMaxBookingsPerDay(Integer maxBookingsPerDay) { 
+        this.maxBookingsPerDay = maxBookingsPerDay; 
+    }
     
-    public Integer getAvailableSlots() { return availableSlots; }
-    public void setAvailableSlots(Integer availableSlots) { this.availableSlots = availableSlots; }
+    public Integer getCurrentBookings() { return currentBookings; }
+    public void setCurrentBookings(Integer currentBookings) { 
+        this.currentBookings = currentBookings; 
+    }
+    
+    public Integer getRemainingSlots() { return remainingSlots; }
+    public void setRemainingSlots(Integer remainingSlots) { 
+        this.remainingSlots = remainingSlots; 
+    }
+    
+    public Integer getMinutesPerPatient() { return minutesPerPatient; }
+    public void setMinutesPerPatient(Integer minutesPerPatient) { 
+        this.minutesPerPatient = minutesPerPatient; 
+    }
     
     public Boolean getIsAvailable() { return isAvailable; }
     public void setIsAvailable(Boolean isAvailable) { this.isAvailable = isAvailable; }

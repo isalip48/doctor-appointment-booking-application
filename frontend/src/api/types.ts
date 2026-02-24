@@ -31,6 +31,7 @@ export interface Doctor {
   hospital: Hospital;
 }
 
+// Slot Types
 export interface Slot {
   id: number;
   slotDate: string;
@@ -63,8 +64,9 @@ export interface Booking {
 export interface User {
   id: number;
   name: string;
-  email: string;
-  phoneNumber?: string;
+  email?: string; // Now optional
+  phoneNumber: string;
+  nic: string; // NEW - Required
   age?: number;
   gender?: "MALE" | "FEMALE" | "OTHER";
 }
@@ -74,19 +76,23 @@ export interface SlotSearchRequest {
   hospitalId?: number;
   doctorId?: number;
   specialization?: string;
-  date: string; // Required: "2024-02-05"
+  date: string;
 }
 
+// NEW: Guest Booking Request
 export interface BookingRequest {
   slotId: number;
-  userId: number;
+  name: string;
+  phoneNumber: string;
+  nic: string;
+  email?: string;
+  age?: number;
+  gender?: "MALE" | "FEMALE" | "OTHER";
   patientNotes?: string;
 }
 
-export interface CreateUserRequest {
-  name: string;
-  email: string;
-  phoneNumber?: string;
-  age?: number;
-  gender?: "MALE" | "FEMALE" | "OTHER";
+// NEW: Booking Lookup Request
+export interface BookingLookupRequest {
+  phoneNumber: string;
+  nic: string;
 }

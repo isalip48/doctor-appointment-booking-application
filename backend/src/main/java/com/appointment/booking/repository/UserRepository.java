@@ -1,38 +1,28 @@
 package com.appointment.booking.repository;
 
-import com.appointment.booking.entity.User;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import com.appointment.booking.entity.User;
 
-/**
- * User Repository
- * 
- * SIMPLE: Basic user lookup operations
- */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     
-    /**
-     * Find user by email
-     * 
-     * WHY: For login/authentication (future feature)
-     * Optional: Might not find a user, so return Optional instead of null
-     * 
-     * HOW TO USE:
-     * Optional<User> userOpt = userRepository.findByEmail("john@example.com");
-     * if (userOpt.isPresent()) {
-     *     User user = userOpt.get();
-     * }
-     */
     Optional<User> findByEmail(String email);
+    boolean existsByEmail(String email);
     
     /**
-     * Check if email already exists
+     * NEW: Find user by phone number and NIC
      * 
-     * WHY: Prevent duplicate registrations
-     * Returns: true/false (fast, doesn't load entire user object)
+     * USE CASE: Guest booking lookup
+     * User enters phone + NIC to view their bookings
      */
-    boolean existsByEmail(String email);
+    Optional<User> findByPhoneNumberAndNic(String phoneNumber, String nic);
+    
+    /**
+     * NEW: Check if user exists with this phone + NIC
+     */
+    boolean existsByPhoneNumberAndNic(String phoneNumber, String nic);
 }

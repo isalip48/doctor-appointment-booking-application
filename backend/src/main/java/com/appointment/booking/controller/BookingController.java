@@ -1,21 +1,23 @@
 package com.appointment.booking.controller;
 
-import com.appointment.booking.dto.BookingDTO;
-import com.appointment.booking.dto.BookingRequest;
-import com.appointment.booking.service.BookingService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
-/**
- * Booking Controller
- * 
- * BASE URL: /api/bookings
- * 
- * CRITICAL CONTROLLER: Handles appointment booking process
- */
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.appointment.booking.dto.BookingDTO;
+import com.appointment.booking.dto.BookingRequestDTO;
+import com.appointment.booking.service.BookingService;
+
 @RestController
 @RequestMapping("/api/bookings")
 @CrossOrigin(origins = "*")
@@ -29,40 +31,26 @@ public class BookingController {
     
     /**
      * POST /api/bookings
-     * Create a new booking
-     * 
-     * MOST IMPORTANT ENDPOINT FOR USERS
+     * Create a new booking (UPDATED - no userId required)
      * 
      * REQUEST BODY:
      * {
-     *   "slotId": 123,
-     *   "userId": 45,
-     *   "patientNotes": "Feeling unwell since 3 days"
+     *   "slotId": 1,
+     *   "name": "John Doe",
+     *   "phoneNumber": "0771234567",
+     *   "nic": "123456789V",
+     *   "email": "john@example.com",  // optional
+     *   "age": 30,                     // optional
+     *   "gender": "MALE",              // optional
+     *   "patientNotes": "First visit"  // optional
      * }
-     * 
-     * SUCCESS RESPONSE (201 CREATED):
-     * {
-     *   "id": 789,
-     *   "bookingTime": "2024-02-04 15:30:00",
-     *   "status": "CONFIRMED",
-     *   "appointmentDate": "2024-02-10",
-     *   "appointmentTime": "09:00",
-     *   "doctor": { "id": 1, "name": "Dr. Smith", "specialization": "Cardiology" },
-     *   "hospital": { "id": 5, "name": "Apollo Hospital" }
-     * }
-     * 
-     * ERROR RESPONSES:
-     * - 400 BAD REQUEST: Slot already full, invalid data
-     * - 404 NOT FOUND: User or slot doesn't exist
      */
     @PostMapping
-    public ResponseEntity<?> createBooking(@RequestBody BookingRequest request) {
+    public ResponseEntity<?> createBooking(@RequestBody BookingRequestDTO request) {
         try {
             BookingDTO booking = bookingService.createBooking(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(booking);
         } catch (RuntimeException e) {
-            // DIFFERENT ERRORS, SAME STATUS CODE (for now)
-            // In production: distinguish between 400 vs 404 vs 409 (conflict)
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(e.getMessage());
@@ -70,59 +58,41 @@ public class BookingController {
     }
     
     /**
-     * GET /api/bookings/user/{userId}
-     * Get all bookings for a user
+     * NEW: GET /api/bookings/lookup
+     * Get bookings by phone number and NIC
      * 
-     * USE CASE: "My Appointments" page - shows all past and future appointments
+     * QUERY PARAMS:
+     * - phoneNumber: User's phone number
+     * - nic: User's NIC
      * 
-     * RETURNS: List of all bookings, sorted by most recent first
+     * EXAMPLE:
+     * GET /api/bookings/lookup?phoneNumber=0771234567&nic=123456789V
      */
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<BookingDTO>> getUserBookings(@PathVariable Long userId) {
-        List<BookingDTO> bookings = bookingService.getUserBookings(userId);
-        return ResponseEntity.ok(bookings);
-    }
-    
-    /**
-     * GET /api/bookings/user/{userId}/upcoming
-     * Get user's upcoming appointments
-     * 
-     * USE CASE: Dashboard widget "Your Next Appointment"
-     * 
-     * FILTERS:
-     * - Only CONFIRMED bookings
-     * - Only future dates (today or later)
-     * - Sorted by soonest first
-     */
-    @GetMapping("/user/{userId}/upcoming")
-    public ResponseEntity<List<BookingDTO>> getUpcomingBookings(@PathVariable Long userId) {
-        List<BookingDTO> bookings = bookingService.getUpcomingBookings(userId);
-        return ResponseEntity.ok(bookings);
-    }
-    
-    /**
-     * GET /api/bookings/user/{userId}/past
-     * Get user's past appointments
-     * 
-     * USE CASE: "Appointment History" section
-     */
-    @GetMapping("/user/{userId}/past")
-    public ResponseEntity<List<BookingDTO>> getPastBookings(@PathVariable Long userId) {
-        List<BookingDTO> bookings = bookingService.getPastBookings(userId);
-        return ResponseEntity.ok(bookings);
-    }
-    
-    /**
-     * GET /api/bookings/{id}
-     * Get single booking details
-     * 
-     * USE CASE: Viewing booking confirmation page
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getBookingById(@PathVariable Long id) {
+    @GetMapping("/lookup")
+    public ResponseEntity<?> getBookingsByPhoneAndNic(
+            @RequestParam String phoneNumber,
+            @RequestParam String nic) {
         try {
-            BookingDTO booking = bookingService.getBookingById(id);
-            return ResponseEntity.ok(booking);
+            List<BookingDTO> bookings = bookingService.getBookingsByPhoneAndNic(phoneNumber, nic);
+            return ResponseEntity.ok(bookings);
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(e.getMessage());
+        }
+    }
+    
+    /**
+     * NEW: GET /api/bookings/lookup/upcoming
+     * Get upcoming bookings by phone number and NIC
+     */
+    @GetMapping("/lookup/upcoming")
+    public ResponseEntity<?> getUpcomingBookingsByPhoneAndNic(
+            @RequestParam String phoneNumber,
+            @RequestParam String nic) {
+        try {
+            List<BookingDTO> bookings = bookingService.getUpcomingBookingsByPhoneAndNic(phoneNumber, nic);
+            return ResponseEntity.ok(bookings);
         } catch (RuntimeException e) {
             return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
@@ -132,36 +102,38 @@ public class BookingController {
     
     /**
      * DELETE /api/bookings/{id}/cancel
-     * Cancel a booking
+     * Cancel a booking (UPDATED - verify with phone + NIC)
      * 
-     * WHY DELETE: RESTful convention for cancellation
-     * Alternative: PUT with status change, but DELETE is more semantic
-     * 
-     * QUERY PARAM: userId for security check (ensure user owns the booking)
-     * 
-     * EXAMPLE:
-     * DELETE /api/bookings/789/cancel?userId=45
-     * 
-     * WHAT HAPPENS:
-     * 1. Verify user owns this booking
-     * 2. Check booking is CONFIRMED (can't cancel already cancelled)
-     * 3. Free up the slot (decrement bookedSlots)
-     * 4. Update booking status to CANCELLED
-     * 
-     * SUCCESS: Returns updated booking with status = "CANCELLED"
+     * QUERY PARAMS:
+     * - phoneNumber: For verification
+     * - nic: For verification
      */
     @DeleteMapping("/{id}/cancel")
     public ResponseEntity<?> cancelBooking(
             @PathVariable Long id,
-            @RequestParam Long userId) {
-        
+            @RequestParam String phoneNumber,
+            @RequestParam String nic) {
         try {
-            BookingDTO booking = bookingService.cancelBooking(id, userId);
+            BookingDTO booking = bookingService.cancelBooking(id, phoneNumber, nic);
             return ResponseEntity.ok(booking);
         } catch (RuntimeException e) {
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(e.getMessage());
+        }
+    }
+    
+    /**
+     * GET /api/bookings/{id}
+     * Get single booking details
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getBookingById(@PathVariable Long id) {
+        try {
+            BookingDTO booking = bookingService.getBookingById(id);
+            return ResponseEntity.ok(booking);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 }

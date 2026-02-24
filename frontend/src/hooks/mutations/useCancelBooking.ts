@@ -3,27 +3,26 @@ import { cancelBooking } from '@/api/bookings.api';
 import { Alert } from 'react-native';
 
 /**
- * Cancel Booking Mutation
- * 
- * USAGE:
- * const { mutate: cancel } = useCancelBooking();
- * 
- * cancel({ bookingId: 123, userId: 45 });
+ * Cancel Booking Mutation - UPDATED
  */
 export const useCancelBooking = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ bookingId, userId }: { bookingId: number; userId: number }) => 
-      cancelBooking(bookingId, userId),
+    mutationFn: ({ 
+      bookingId, 
+      phoneNumber, 
+      nic 
+    }: { 
+      bookingId: number; 
+      phoneNumber: string;
+      nic: string;
+    }) => cancelBooking(bookingId, phoneNumber, nic),
     
-    onSuccess: (data, variables) => {
-      // Invalidate user's bookings
+    onSuccess: () => {
+      // Invalidate bookings queries
       queryClient.invalidateQueries({ 
-        queryKey: ['bookings', 'user', variables.userId] 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: ['bookings', 'upcoming', variables.userId] 
+        queryKey: ['bookings'] 
       });
       
       // Invalidate slots (slot became available again)
@@ -31,7 +30,7 @@ export const useCancelBooking = () => {
         queryKey: ['slots'] 
       });
       
-      Alert.alert('Cancelled', 'Your booking has been cancelled');
+      Alert.alert('Cancelled', 'Your booking has been cancelled successfully');
     },
     
     onError: (error: any) => {

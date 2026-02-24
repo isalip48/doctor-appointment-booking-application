@@ -1,57 +1,41 @@
 import { useQuery } from '@tanstack/react-query';
 import { 
-  getUserBookings, 
-  getUpcomingBookings, 
-  getPastBookings,
+  getBookingsByPhoneAndNic,
+  getUpcomingBookingsByPhoneAndNic,
   getBookingById 
 } from '@/api/bookings.api';
 
 /**
- * React Query Hooks for Bookings
+ * React Query Hooks for Bookings - UPDATED for Guest Bookings
  */
 
 /**
- * Get all bookings for a user
+ * Get all bookings by phone and NIC
  * 
  * USAGE:
- * const { data: bookings } = useUserBookings(userId);
+ * const { data: bookings } = useGuestBookings('0771234567', '123456789V');
  */
-export const useUserBookings = (userId: number) => {
+export const useGuestBookings = (phoneNumber: string, nic: string) => {
   return useQuery({
-    queryKey: ['bookings', 'user', userId],
-    queryFn: () => getUserBookings(userId),
-    enabled: !!userId,
-    staleTime: 30 * 1000, // 30 seconds (bookings can change)
+    queryKey: ['bookings', 'guest', phoneNumber, nic],
+    queryFn: () => getBookingsByPhoneAndNic(phoneNumber, nic),
+    enabled: !!phoneNumber && !!nic && phoneNumber.length >= 10 && nic.length >= 9,
+    staleTime: 30 * 1000, // 30 seconds
   });
 };
 
 /**
- * Get upcoming bookings
+ * Get upcoming bookings by phone and NIC
  * 
  * USAGE:
- * const { data: upcoming } = useUpcomingBookings(userId);
+ * const { data: upcoming } = useUpcomingGuestBookings('0771234567', '123456789V');
  */
-export const useUpcomingBookings = (userId: number) => {
+export const useUpcomingGuestBookings = (phoneNumber: string, nic: string) => {
   return useQuery({
-    queryKey: ['bookings', 'upcoming', userId],
-    queryFn: () => getUpcomingBookings(userId),
-    enabled: !!userId,
+    queryKey: ['bookings', 'upcoming', 'guest', phoneNumber, nic],
+    queryFn: () => getUpcomingBookingsByPhoneAndNic(phoneNumber, nic),
+    enabled: !!phoneNumber && !!nic && phoneNumber.length >= 10 && nic.length >= 9,
     staleTime: 30 * 1000,
-  });
-};
-
-/**
- * Get past bookings
- * 
- * USAGE:
- * const { data: past } = usePastBookings(userId);
- */
-export const usePastBookings = (userId: number) => {
-  return useQuery({
-    queryKey: ['bookings', 'past', userId],
-    queryFn: () => getPastBookings(userId),
-    enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // 5 minutes (past bookings don't change)
   });
 };
 

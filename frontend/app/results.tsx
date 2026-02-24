@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  Alert,
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,18 +13,22 @@ import { useQuery } from "@tanstack/react-query";
 import { Slot } from "@/api/types";
 import Loader from "@/components/common/Loader";
 import EmptyState from "@/components/common/EmptyState";
-import { useCreateBooking } from "@/hooks/mutations/useCreateBooking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { isWeb } from "@/utils/platform";
 
 const SlotResultsScreen = () => {
   const router = useRouter();
-  const { searchQuery, searchType, selectedDate } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  
+  const searchQuery = typeof params.searchQuery === 'string' ? params.searchQuery : '';
+  const searchType = typeof params.searchType === 'string' ? params.searchType : 'name';
+  const selectedDate = typeof params.selectedDate === 'string' ? params.selectedDate : '';
 
   // Fetch slots
   const { data: slots, isLoading } = useQuery({
     queryKey: ["slots", "search", searchQuery, searchType, selectedDate],
     queryFn: async () => {
+      console.log('🔍 Searching slots:', { searchQuery, searchType, selectedDate });
       const response = await apiClient.get<Slot[]>("/slots/search", {
         params: {
           query: searchQuery,
@@ -35,38 +38,17 @@ const SlotResultsScreen = () => {
       });
       return response.data;
     },
+    enabled: !!searchQuery && !!selectedDate,
   });
 
-  const { mutate: book, isPending: isBooking } = useCreateBooking();
-
+  // NEW: Navigate to booking form instead of direct booking
   const handleBookSlot = (slot: Slot) => {
-    Alert.alert(
-      "Confirm Booking",
-      `Book with ${slot.doctor.name} at ${slot.nextAvailableTime}?\n\n` +
-        `Location: ${slot.hospital.name}\n` +
-        `Date: ${slot.slotDate}\n` +
-        `Estimated consultation: ${slot.minutesPerPatient} minutes`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Confirm Booking",
-          onPress: () => {
-            book(
-              {
-                slotId: slot.id,
-                userId: 1,
-                patientNotes: "",
-              },
-              {
-                onSuccess: () => {
-                  router.push("/bookings");
-                },
-              },
-            );
-          },
-        },
-      ],
-    );
+    router.push({
+      pathname: '/booking-details',
+      params: {
+        slot: JSON.stringify(slot),
+      },
+    });
   };
 
   if (isLoading) return <Loader message="Searching available slots..." />;
@@ -100,7 +82,6 @@ const SlotResultsScreen = () => {
                     key={slot.id}
                     slot={slot}
                     onBook={handleBookSlot}
-                    isBooking={isBooking}
                   />
                 ))
               ) : (
@@ -141,11 +122,7 @@ const SlotResultsScreen = () => {
         data={slots || []}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <ModernSlotCard
-            slot={item}
-            onBook={handleBookSlot}
-            isBooking={isBooking}
-          />
+          <ModernSlotCard slot={item} onBook={handleBookSlot} />
         )}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
         ListEmptyComponent={
@@ -160,14 +137,18 @@ const SlotResultsScreen = () => {
   );
 };
 
+/**
+ * Modern Slot Card Component - UPDATED
+ * 
+ * REMOVED: isBooking prop (no longer booking directly)
+ * CHANGED: Button navigates to booking form
+ */
 const ModernSlotCard = ({
   slot,
   onBook,
-  isBooking,
 }: {
   slot: Slot;
   onBook: (slot: Slot) => void;
-  isBooking: boolean;
 }) => {
   const isAvailable = slot.isAvailable && slot.remainingSlots > 0;
 
@@ -243,14 +224,14 @@ const ModernSlotCard = ({
           </View>
         </View>
 
+        {/* Updated Button - Navigates to form instead of direct booking */}
         {isAvailable ? (
           <TouchableOpacity
             onPress={() => onBook(slot)}
-            disabled={isBooking}
-            className={`bg-indigo-600 p-4 rounded-xl ${isBooking ? "opacity-50" : ""}`}
+            className="bg-indigo-600 p-4 rounded-xl"
           >
             <Text className="text-white text-center font-bold text-base">
-              {isBooking ? "Booking..." : "Book Appointment"}
+              Book Appointment
             </Text>
           </TouchableOpacity>
         ) : (

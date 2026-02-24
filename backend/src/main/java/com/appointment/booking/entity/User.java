@@ -1,14 +1,24 @@
 package com.appointment.booking.entity;
 
-import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+
 /**
- * User Entity
+ * User Entity - UPDATED
  * 
- * WHY: Represents patients who book appointments
- * NOTE: In production, you'd add authentication (passwords, roles, etc.)
+ * NEW: Guest booking support with NIC
+ * Users can book without registration using phone + NIC
  */
 @Entity
 @Table(name = "users")
@@ -21,10 +31,24 @@ public class User {
     @Column(nullable = false)
     private String name;
     
-    @Column(nullable = false, unique = true)
+    /**
+     * Email is now optional (not required for guest bookings)
+     */
+    @Column(unique = true)
     private String email;
     
+    /**
+     * Phone number - REQUIRED for bookings
+     */
+    @Column(nullable = false)
     private String phoneNumber;
+    
+    /**
+     * NIC (National Identity Card) - REQUIRED for bookings
+     * Used for verification when checking bookings
+     */
+    @Column(nullable = false)
+    private String nic;
     
     private Integer age;
     
@@ -35,20 +59,19 @@ public class User {
         MALE, FEMALE, OTHER
     }
     
-    /**
-     * WHY OneToMany: One user can have many bookings
-     */
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Booking> bookings = new ArrayList<>();
     
     // Constructors
     public User() {}
     
-    public User(Long id, String name, String email, String phoneNumber, Integer age, Gender gender) {
+    public User(Long id, String name, String email, String phoneNumber, 
+                String nic, Integer age, Gender gender) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.phoneNumber = phoneNumber;
+        this.nic = nic;
         this.age = age;
         this.gender = gender;
     }
@@ -65,6 +88,9 @@ public class User {
     
     public String getPhoneNumber() { return phoneNumber; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    
+    public String getNic() { return nic; }
+    public void setNic(String nic) { this.nic = nic; }
     
     public Integer getAge() { return age; }
     public void setAge(Integer age) { this.age = age; }

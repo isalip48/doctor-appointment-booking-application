@@ -1,16 +1,16 @@
 import { apiClient } from './client';
-import { Booking, BookingRequest } from './types';
+import { Booking, BookingRequest, BookingLookupRequest } from './types';
 
 /**
- * Booking API Functions
+ * Booking API Functions - UPDATED for Guest Bookings
  */
 
 /**
- * Create a new booking
+ * Create a new booking (GUEST BOOKING)
  * 
  * ENDPOINT: POST /api/bookings
  * 
- * MUTATION: Changes server state
+ * NEW: No userId required, includes user details in request
  */
 export const createBooking = async (request: BookingRequest): Promise<Booking> => {
   const response = await apiClient.post<Booking>('/bookings', request);
@@ -18,45 +18,49 @@ export const createBooking = async (request: BookingRequest): Promise<Booking> =
 };
 
 /**
- * Get all bookings for a user
+ * NEW: Get bookings by phone number and NIC
  * 
- * ENDPOINT: GET /api/bookings/user/{userId}
+ * ENDPOINT: GET /api/bookings/lookup?phoneNumber={phone}&nic={nic}
+ * 
+ * USE CASE: Guest users checking their bookings
  */
-export const getUserBookings = async (userId: number): Promise<Booking[]> => {
-  const response = await apiClient.get<Booking[]>(`/bookings/user/${userId}`);
+export const getBookingsByPhoneAndNic = async (
+  phoneNumber: string, 
+  nic: string
+): Promise<Booking[]> => {
+  const response = await apiClient.get<Booking[]>('/bookings/lookup', {
+    params: { phoneNumber, nic }
+  });
   return response.data;
 };
 
 /**
- * Get upcoming bookings for a user
+ * NEW: Get upcoming bookings by phone and NIC
  * 
- * ENDPOINT: GET /api/bookings/user/{userId}/upcoming
+ * ENDPOINT: GET /api/bookings/lookup/upcoming?phoneNumber={phone}&nic={nic}
  */
-export const getUpcomingBookings = async (userId: number): Promise<Booking[]> => {
-  const response = await apiClient.get<Booking[]>(`/bookings/user/${userId}/upcoming`);
+export const getUpcomingBookingsByPhoneAndNic = async (
+  phoneNumber: string,
+  nic: string
+): Promise<Booking[]> => {
+  const response = await apiClient.get<Booking[]>('/bookings/lookup/upcoming', {
+    params: { phoneNumber, nic }
+  });
   return response.data;
 };
 
 /**
- * Get past bookings for a user
+ * Cancel a booking (UPDATED - verify with phone + NIC)
  * 
- * ENDPOINT: GET /api/bookings/user/{userId}/past
+ * ENDPOINT: DELETE /api/bookings/{bookingId}/cancel?phoneNumber={phone}&nic={nic}
  */
-export const getPastBookings = async (userId: number): Promise<Booking[]> => {
-  const response = await apiClient.get<Booking[]>(`/bookings/user/${userId}/past`);
-  return response.data;
-};
-
-/**
- * Cancel a booking
- * 
- * ENDPOINT: DELETE /api/bookings/{bookingId}/cancel?userId={userId}
- * 
- * MUTATION: Changes server state (cancels booking, frees slot)
- */
-export const cancelBooking = async (bookingId: number, userId: number): Promise<Booking> => {
+export const cancelBooking = async (
+  bookingId: number, 
+  phoneNumber: string,
+  nic: string
+): Promise<Booking> => {
   const response = await apiClient.delete<Booking>(`/bookings/${bookingId}/cancel`, {
-    params: { userId }
+    params: { phoneNumber, nic }
   });
   return response.data;
 };

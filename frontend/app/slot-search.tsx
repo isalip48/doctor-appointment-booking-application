@@ -41,7 +41,7 @@ const SlotSearchScreen = () => {
     typeof doctorId === "string" ? Number(doctorId) : undefined;
   const hospitalIdNum =
     typeof hospitalId === "string" ? Number(hospitalId) : undefined;
-    
+
   // Fetch slots
   const { data: slots, isLoading } = useSlotSearch({
     doctorId: doctorIdNum,
@@ -69,8 +69,10 @@ const SlotSearchScreen = () => {
             book(
               {
                 slotId: slot.id,
-                userId: 1,
                 patientNotes: "",
+                name: "",
+                phoneNumber: "",
+                nic: "",
               },
               {
                 onSuccess: () => {

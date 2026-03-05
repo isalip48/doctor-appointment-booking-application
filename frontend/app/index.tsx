@@ -76,7 +76,7 @@ export default function LandingPage() {
 
                 {/* BADGE */}
                 <View
-                  className={`bg-indigo-100 px-4 py-1.5 rounded-full mb-4 ${
+                  className={`bg-indigo-100 px-4 py-1.5 rounded-full mb-4 -mt-6 ${
                     PLATFORM.ISWEB ? "self-start" : "self-center"
                   }`}
                 >
@@ -138,31 +138,30 @@ export default function LandingPage() {
               {/* RIGHT ILLUSTRATION (WEB ONLY) */}
               {PLATFORM.ISWEB && <WebIllustration />}
             </View>
+            {/* ACTION SECTION */}
+            <View className={PLATFORM.ISWEB ? "flex-row gap-6" : "gap-4"}>
+              {/* MY BOOKINGS */}
+              <ActionCard
+                title="My Bookings"
+                description="View, manage or cancel your appointments"
+                icon="document-text"
+                iconColor="#10B981"
+                iconBgColor="#ECFDF5"
+                onPress={() => setViewMode("lookup")}
+              />
+
+              {/* AI ASSISTANT */}
+              <ActionCard
+                title="AI Assistant"
+                description="Instantly find the right specialist"
+                icon="sparkles"
+                iconColor="#F59E0B"
+                iconBgColor="#334155"
+                gradient={["#0F172A", "#1E293B"]}
+                badgeText="BETA"
+              />
+            </View>
           </View>
-        </View>
-
-        {/* ACTION SECTION */}
-        <View className={PLATFORM.ISWEB ? "flex-row gap-6" : "gap-4"}>
-          {/* MY BOOKINGS */}
-          <ActionCard
-            title="My Bookings"
-            description="View, manage or cancel your appointments"
-            icon="document-text"
-            iconColor="#10B981"
-            iconBgColor="#ECFDF5"
-            onPress={() => setViewMode("lookup")}
-          />
-
-          {/* AI ASSISTANT */}
-          <ActionCard
-            title="AI Assistant"
-            description="Instantly find the right specialist"
-            icon="sparkles"
-            iconColor="#F59E0B"
-            iconBgColor="#334155"
-            gradient={["#0F172A", "#1E293B"]}
-            badgeText="BETA"
-          />
         </View>
 
         {/* FOOTER */}

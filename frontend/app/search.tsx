@@ -4,20 +4,26 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { format } from "date-fns";
-import { useSpecializations } from "@/hooks/queries/useDoctors";
-import SearchTypeToggle from "@/components/search/SearchTypeToggle";
-import NameSearch from "@/components/search/NameSearch";
-import SpecializationSelector from "@/components/search/SpecializationSelector";
-import DateSelector from "@/components/search/DateSelector";
-import { isWeb } from "@/utils/platform";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { format } from "date-fns";
+import Logo from "@/components/common/Logo";
+import { PLATFORM } from "@/utils/platform";
+import DatePicker from "@/components/common/DatePicker";
 
-const SearchLandingScreen = () => {
+export default function SearchScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<"name" | "specialization">(
     "name",
@@ -25,172 +31,284 @@ const SearchLandingScreen = () => {
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy-MM-dd"),
   );
-  const [selectedSpecialization, setSelectedSpecialization] = useState("");
-
-  const { data: specializations } = useSpecializations();
 
   const handleSearch = () => {
-    const query =
-      searchType === "specialization" ? selectedSpecialization : searchQuery;
-    if (!query) {
-      alert("Please select a doctor or specialization");
+    if (!searchQuery.trim()) {
+      alert("Please enter a doctor name or specialization");
       return;
     }
 
     router.push({
       pathname: "/results",
-      params: { searchQuery: query, searchType, selectedDate },
+      params: {
+        searchQuery,
+        searchType,
+        selectedDate,
+      },
     });
   };
 
-  // --- SHARED UI COMPONENTS ---
-  const SearchContent = () => (
-    <>
-      <SearchTypeToggle searchType={searchType} onToggle={setSearchType} />
-
-      <View className="mt-6">
-        {searchType === "name" ? (
-          <NameSearch value={searchQuery} onChangeText={setSearchQuery} />
-        ) : (
-          <SpecializationSelector
-            specializations={specializations}
-            selectedSpecialization={selectedSpecialization}
-            onSelect={setSelectedSpecialization}
-          />
-        )}
-      </View>
-
-      <View className="mt-8">
-        <Text className="text-gray-500 font-semibold mb-3 ml-1 uppercase text-xs tracking-widest">
-          Select Appointment Date
-        </Text>
-        <DateSelector
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-          daysToShow={isWeb ? 30 : 14}
-        />
-      </View>
-
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={handleSearch}
-        className="bg-indigo-600 mt-10 py-5 rounded-2xl shadow-xl shadow-indigo-300 items-center justify-center flex-row"
+  return (
+    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-        <Ionicons
-          name="search"
-          size={20}
-          color="white"
-          style={{ marginRight: 8 }}
-        />
-        <Text className="text-white text-center text-lg font-bold">
-          Search Available Slots
-        </Text>
-      </TouchableOpacity>
-    </>
-  );
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* HERO SECTION */}
+          <View
+            className="relative overflow-hidden"
+            style={{ paddingTop: PLATFORM.ISWEB ? 40 : 0 }}
+          >
+            <View
+              className={
+                PLATFORM.ISWEB ? "max-w-6xl mx-auto w-full px-12" : "px-6"
+              }
+            >
+              <View
+                className={
+                  PLATFORM.ISWEB
+                    ? "flex-row items-center py-8"
+                    : "items-center pt-4 pb-10"
+                }
+              >
+                {/* LEFT CONTENT */}
+                <View
+                  className={
+                    PLATFORM.ISWEB ? "flex-1 pr-12" : "w-full items-center"
+                  }
+                >
+                  <View className={`${!PLATFORM.ISWEB && "items-center"}`}>
+                    <Logo size={PLATFORM.ISWEB ? 320 : 200} />
+                  </View>
 
-  // --- WEB LAYOUT ---
-  if (isWeb) {
-    return (
-      <View className="flex-1 bg-slate-50">
-        <ScrollView >
-          <View className="max-w-full mx-auto w-full px-6 py-16 flex-row gap-12">
-            {/* Left Column: Branding & Info */}
-            <View className="flex-1 justify-center">
-              <View className="bg-indigo-100 self-start px-4 py-1 rounded-full mb-4">
-                <Text className="text-indigo-700 font-bold text-sm">
-                  Top Rated Healthcare
-                </Text>
-              </View>
-              <Text className="text-slate-900 text-6xl font-extrabold leading-tight mb-6">
-                Find and Book the{" "}
-                <Text className="text-indigo-600">Best Doctors</Text> Near You
-              </Text>
-              <Text className="text-slate-600 text-xl leading-relaxed mb-8 max-w-lg">
-                Schedule appointments instantly with our certified specialists.
-                Simple, fast, and secure booking for your health.
-              </Text>
-            </View>
-
-            {/* Right Column: Search Card */}
-            <View className="flex-1">
-              <View className="bg-white rounded-[40px] shadow-2xl border border-slate-100 p-10">
-                <SearchContent />
-
-                <View className="mt-8 pt-8 border-t border-slate-100">
-                  <TouchableOpacity
-                    onPress={() => router.push("/my-bookings")}
-                    className="flex-row items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200"
+                  {/* BADGE */}
+                  <View
+                    className={`bg-indigo-100 px-4 py-1.5 rounded-full mb-4 -mt-6 ${
+                      PLATFORM.ISWEB ? "self-start" : "self-center"
+                    }`}
                   >
-                    <View className="flex-row items-center">
-                      <View className="bg-white p-2 rounded-lg mr-4 shadow-sm">
-                        <Ionicons
-                          name="calendar-outline"
-                          size={24}
-                          color="#4F46E5"
+                    <Text className="text-indigo-600 font-bold text-[10px] tracking-widest uppercase">
+                      Instant Booking
+                    </Text>
+                  </View>
+
+                  {/* HEADLINE */}
+                  <Text
+                    style={{ fontSize: PLATFORM.ISWEB ? 56 : 34 }}
+                    className={`font-black text-slate-900 leading-tight mb-6 ${
+                      !PLATFORM.ISWEB && "text-center"
+                    }`}
+                  >
+                    Find Your{"\n"}
+                    <Text className="text-indigo-600">Perfect Doctor</Text>
+                  </Text>
+
+                  {/* DESCRIPTION */}
+                  <Text
+                    className={`text-slate-500 text-lg mb-8 leading-relaxed ${
+                      !PLATFORM.ISWEB && "text-center px-2"
+                    }`}
+                  >
+                    View real-time availability and book instantly with our
+                    certified healthcare professionals.
+                  </Text>
+
+                  {/* WEB FEATURES */}
+                  {PLATFORM.ISWEB && (
+                    <View className="gap-4 mb-8">
+                      {[
+                        { icon: "flash", text: "Real-time availability" },
+                        {
+                          icon: "shield-checkmark",
+                          text: "Verified specialists",
+                        },
+                        { icon: "time", text: "Instant confirmation" },
+                      ].map((item, index) => (
+                        <View key={index} className="flex-row items-center">
+                          <View className="bg-indigo-100 p-3 rounded-xl mr-4">
+                            <Ionicons
+                              name={item.icon as any}
+                              size={24}
+                              color="#4F46E5"
+                            />
+                          </View>
+                          <Text className="text-slate-700 font-semibold text-lg">
+                            {item.text}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* BACK BUTTON - WEB ONLY */}
+                  {PLATFORM.ISWEB && (
+                    <TouchableOpacity
+                      onPress={() => router.back()}
+                      className="flex-row items-center"
+                    >
+                      <Ionicons name="arrow-back" size={20} color="#64748B" />
+                      <Text className="text-slate-600 font-semibold ml-2">
+                        Back to Home
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/* SEARCH CARD */}
+                <View
+                  className={PLATFORM.ISWEB ? "flex-1 mt-20" : "w-full mt-4"}
+                >
+                  <View className="bg-white rounded-3xl p-6 shadow-2xl border border-slate-200">
+                    {/* SEARCH TYPE */}
+                    <View className="flex-row bg-slate-100 rounded-2xl p-1 mb-4">
+                      <TouchableOpacity
+                        onPress={() => setSearchType("name")}
+                        activeOpacity={0.7}
+                        style={{
+                          flex: 1,
+                          paddingVertical: 12,
+                          borderRadius: 12,
+                          backgroundColor:
+                            searchType === "name" ? "white" : "transparent",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            textAlign: "center",
+                            fontWeight: "bold",
+                            color:
+                              searchType === "name" ? "#4F46E5" : "#64748B",
+                          }}
+                        >
+                          By Name
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        onPress={() => setSearchType("specialization")}
+                        activeOpacity={0.7}
+                        style={{
+                          flex: 1,
+                          paddingVertical: 12,
+                          borderRadius: 12,
+                          backgroundColor:
+                            searchType === "specialization"
+                              ? "white"
+                              : "transparent",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            textAlign: "center",
+                            fontWeight: "bold",
+                            color:
+                              searchType === "specialization"
+                                ? "#4F46E5"
+                                : "#64748B",
+                          }}
+                        >
+                          By Specialty
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* SEARCH INPUT */}
+                    <View className="mb-4">
+                      <Text className="text-slate-700 font-semibold mb-2 text-sm">
+                        {searchType === "name"
+                          ? "Doctor's Name"
+                          : "Specialization"}
+                      </Text>
+
+                      <View className="bg-slate-50 rounded-2xl border-2 border-slate-200 px-4 py-3 flex-row items-center">
+                        <Ionicons name="search" size={20} color="#64748B" />
+                        <TextInput
+                          value={searchQuery}
+                          onChangeText={setSearchQuery}
+                          placeholder={
+                            searchType === "name"
+                              ? "e.g., Dr. Fernando"
+                              : "e.g., Cardiology"
+                          }
+                          placeholderTextColor="#94A3B8"
+                          className="flex-1 ml-3 text-base text-slate-900"
+                          returnKeyType="search"
+                          onSubmitEditing={handleSearch}
                         />
                       </View>
-                      <View>
-                        <Text className="text-slate-800 font-bold">
-                          View My Bookings
-                        </Text>
-                        <Text className="text-slate-500 text-sm">
-                          Manage your schedule
-                        </Text>
-                      </View>
                     </View>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={20}
-                      color="#6366F1"
-                    />
-                  </TouchableOpacity>
+
+                    {/* DATE PICKER */}
+                    <View className="mb-4">
+                      <Text className="text-slate-700 font-semibold mb-2 text-sm">
+                        Appointment Date
+                      </Text>
+
+                      <DatePicker
+                        selectedDate={selectedDate}
+                        onSelectDate={setSelectedDate}
+                        isWeb={PLATFORM.ISWEB}
+                      />
+                    </View>
+
+                    {/* SEARCH BUTTON */}
+                    <TouchableOpacity
+                      onPress={handleSearch}
+                      activeOpacity={0.9}
+                      className="mt-6"
+                    >
+                      <LinearGradient
+                        colors={["#4F46E5", "#7C3AED"]}
+                        style={{
+                          paddingVertical: 16,
+                          borderRadius: 16,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Ionicons name="search" size={20} color="white" />
+                        <Text className="text-white font-bold text-lg ml-2">
+                          {PLATFORM.ISWEB
+                            ? "Search Available Slots"
+                            : "Search Slots"}
+                        </Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+
+                    {/* BACK BUTTON - MOBILE ONLY */}
+                    {!PLATFORM.ISWEB && (
+                      <TouchableOpacity
+                        onPress={() => router.back()}
+                        className="flex-row items-center justify-center mt-4 py-3"
+                      >
+                        <Ionicons name="arrow-back" size={18} color="#64748B" />
+                        <Text className="text-slate-600 font-semibold ml-2 text-sm">
+                          Back to Home
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
               </View>
             </View>
           </View>
+
+          {/* FOOTER */}
+          <View className="mt-auto py-8 border-t border-slate-50 items-center">
+            <Text className="text-slate-300 text-[10px] uppercase tracking-[2px] font-bold">
+              © 2024 DocSync Digital Health
+            </Text>
+          </View>
         </ScrollView>
-      </View>
-    );
-  }
-
-  // --- MOBILE LAYOUT ---
-  return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View className="px-6 pt-8 pb-6">
-          <Text className="text-slate-900 text-3xl font-extrabold tracking-tight">
-            Find Your Doctor
-          </Text>
-          <Text className="text-slate-500 text-base mt-1">
-            Book an appointment in seconds
-          </Text>
-        </View>
-
-        <View className="px-6">
-          <SearchContent />
-        </View>
-
-        <View className="px-6 mt-10">
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.push("/my-bookings")}
-            className="mt-6 mb-10 bg-indigo-50 p-5 rounded-3xl border border-indigo-100 flex-row items-center justify-between"
-          >
-            <View className="flex-row items-center gap-4">
-              <View className="bg-indigo-600 p-2 rounded-xl">
-                <Ionicons name="calendar" size={20} color="white" />
-              </View>
-              <Text className="text-indigo-900 font-bold text-lg">
-                My Appointments
-              </Text>
-            </View>
-            <Ionicons name="arrow-forward" size={20} color="#4338CA" />
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
-};
-
-export default SearchLandingScreen;
+}

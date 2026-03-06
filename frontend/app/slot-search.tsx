@@ -18,7 +18,7 @@ import EmptyState from "@/components/common/EmptyState";
 import { Slot } from "@/api/types";
 import { format, addDays } from "date-fns";
 import { useState, useMemo } from "react";
-import { isWeb } from "@/utils/platform";
+import { PLATFORM } from "@/utils/platform";
 /**
  * Slot Search Screen
  *
@@ -102,7 +102,7 @@ const SlotSearchScreen = () => {
   if (isLoading) return <Loader message="Searching slots..." />;
 
   // Web Layout
-  if (isWeb) {
+  if (PLATFORM.ISWEB) {
     return (
       <View className="flex-1 bg-gray-50">
         <ScrollView className="flex-1">

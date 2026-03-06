@@ -84,19 +84,8 @@ export default function SearchScreen() {
                     PLATFORM.ISWEB ? "flex-1 pr-12" : "w-full items-center"
                   }
                 >
-                  <View className={`${!PLATFORM.ISWEB && "items-center"}`}>
+                  <View className={`${!PLATFORM.ISWEB && "items-center -mt-10 -mb-10"}`}>
                     <Logo size={PLATFORM.ISWEB ? 320 : 200} />
-                  </View>
-
-                  {/* BADGE */}
-                  <View
-                    className={`bg-indigo-100 px-4 py-1.5 rounded-full mb-4 -mt-6 ${
-                      PLATFORM.ISWEB ? "self-start" : "self-center"
-                    }`}
-                  >
-                    <Text className="text-indigo-600 font-bold text-[10px] tracking-widest uppercase">
-                      Instant Booking
-                    </Text>
                   </View>
 
                   {/* HEADLINE */}

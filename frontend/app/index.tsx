@@ -159,6 +159,7 @@ export default function LandingPage() {
                 iconBgColor="#334155"
                 gradient={["#0F172A", "#1E293B"]}
                 badgeText="BETA"
+                onPress={() => router.push("/ai-assistant")}
               />
             </View>
           </View>

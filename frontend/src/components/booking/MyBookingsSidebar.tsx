@@ -230,11 +230,8 @@ export const MyBookingsSidebar: React.FC<MyBookingsSidebarProps> = ({
       </View>
 
       {/* Logo Card */}
-      <View className="bg-white rounded-3xl shadow-lg p-8 border-2 border-slate-200 items-center">
-        <Logo size={180} />
-        <Text className="text-slate-400 text-xs mt-4 text-center font-semibold">
-          DocSync Digital Health
-        </Text>
+      <View className=" items-center">
+        <Logo size={320} />
       </View>
     </View>
   );

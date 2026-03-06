@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { format } from "date-fns";
@@ -24,6 +24,8 @@ export default function SearchScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
+  const { specialty } = useLocalSearchParams<{ specialty?: string }>();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<"name" | "specialization">(
     "name",
@@ -31,6 +33,16 @@ export default function SearchScreen() {
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy-MM-dd"),
   );
+
+  useEffect(() => {
+    if (specialty) {
+      setSearchType("specialization");
+      setSearchQuery(specialty);
+      
+      // Optional: Automatically trigger the search if you want
+      // handleSearch(); 
+    }
+  }, [specialty]);
 
   const handleSearch = () => {
     if (!searchQuery.trim()) {

@@ -27,9 +27,10 @@ export default function ActionCard({
 }: ActionCardProps) {
   const content = (
     <View
-      className="p-6 rounded-[28px] flex-row items-center"
+      className="p-6 flex-row items-center overflow-hidden"
       style={{
         backgroundColor: gradient ? undefined : "#FFFFFF",
+        borderRadius: 28,
       }}
     >
       {/* Background Gradient (if provided) */}
@@ -40,7 +41,10 @@ export default function ActionCard({
           end={{ x: 1, y: 1 }}
           style={{
             position: "absolute",
-            inset: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             borderRadius: 28,
           }}
         />
@@ -55,7 +59,7 @@ export default function ActionCard({
       </View>
 
       {/* Text */}
-      <View>
+      <View className="flex-1">
         <Text
           className={`text-lg font-bold ${
             gradient ? "text-white" : "text-slate-900"
@@ -74,7 +78,7 @@ export default function ActionCard({
 
       {/* Badge */}
       {badgeText && (
-        <View className="bg-indigo-600 px-3 py-1 rounded-full">
+        <View className="bg-indigo-600 px-3 py-1 rounded-full ml-2">
           <Text className="text-[10px] text-white font-black tracking-wider">
             {badgeText}
           </Text>
@@ -97,6 +101,7 @@ export default function ActionCard({
         shadowOpacity: 0.05,
         shadowRadius: 20,
         elevation: 4,
+        borderRadius: 28,
       }}
     >
       {content}

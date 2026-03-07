@@ -21,7 +21,6 @@ export default function LandingPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-
   return (
     <View className="flex-1 bg-white">
       <ScrollView
@@ -52,7 +51,7 @@ export default function LandingPage() {
                   PLATFORM.ISWEB ? "flex-1 pr-12" : "w-full items-center"
                 }
               >
-                <View className={`${!PLATFORM.ISWEB && "items-center"}`}>
+                <View className={`${!PLATFORM.ISWEB && "items-center -mt-20"}`}>
                   <Logo size={PLATFORM.ISWEB ? 320 : 200} />
                 </View>
 
@@ -88,57 +87,69 @@ export default function LandingPage() {
                   through our secure platform.
                 </Text>
 
-                  <TouchableOpacity
-                    onPress={() => router.push("/search")}
-                    activeOpacity={0.8}
-                    className={PLATFORM.ISWEB ? "" : "w-full px-4"}
+                <TouchableOpacity
+                  onPress={() => router.push("/search")}
+                  activeOpacity={0.8}
+                  className={PLATFORM.ISWEB ? "" : "w-full px-4"}
+                >
+                  <LinearGradient
+                    colors={["#4F46E5", "#3730A3"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{
+                      borderRadius: 16,
+                      paddingVertical: 16,
+                      paddingHorizontal: PLATFORM.ISWEB ? 32 : 24,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
                   >
-                    <LinearGradient
-                      colors={["#4F46E5", "#3730A3"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={{
-                        borderRadius: 16,
-                        paddingVertical: 16,
-                        paddingHorizontal: PLATFORM.ISWEB ? 32 : 24,
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Ionicons name="calendar" size={20} color="white" />
-                      <Text className="text-white font-bold text-lg ml-3">
-                        Book Appointment
-                      </Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
+                    <Ionicons name="calendar" size={20} color="white" />
+                    <Text className="text-white font-bold text-lg ml-3">
+                      Book Appointment
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
               </View>
 
               {/* RIGHT ILLUSTRATION (WEB ONLY) */}
               {PLATFORM.ISWEB && <WebIllustration />}
             </View>
             {/* ACTION SECTION */}
-            <View className={PLATFORM.ISWEB ? "flex-row gap-6" : "gap-4"}>
-              {/* MY BOOKINGS */}
+            <View
+              className={PLATFORM.ISWEB ? "flex-row gap-6 mt-8" : "gap-4 mt-6"}
+            >
+              {/* MY BOOKINGS - Fresh Emerald Theme */}
               <ActionCard
                 title="My Bookings"
                 description="View, manage or cancel your appointments"
                 icon="document-text"
-                iconColor="#10B981"
-                iconBgColor="#ECFDF5"
+                iconColor="#059669" // Emerald 600
+                iconBgColor="#ECFDF5" // Emerald 50
                 onPress={() => router.push("/my-bookings")}
               />
 
-              {/* AI ASSISTANT */}
+              {/* AI ASSISTANT - Dark Premium Theme */}
               <ActionCard
                 title="AI Assistant"
                 description="Instantly find the right specialist"
                 icon="sparkles"
-                iconColor="#F59E0B"
-                iconBgColor="#334155"
-                gradient={["#0F172A", "#1E293B"]}
+                iconColor="#F59E0B" // Amber 500
+                iconBgColor="#334155" // Slate 700
+                gradient={["#1E293B", "#0F172A"]} // Slate 800 to 900
                 badgeText="BETA"
                 onPress={() => router.push("/ai-assistant")}
+              />
+
+              {/* MEDICAL REPORTS - Modern Violet Theme */}
+              <ActionCard
+                title="Medical Reports"
+                description="Instantly get your reports analyzed"
+                icon="receipt"
+                iconColor="#7C3AED" // Violet 600
+                iconBgColor="#F5F3FF" // Violet 50
+                onPress={() => router.push("/medical-reports")} // Changed path for clarity
               />
             </View>
           </View>

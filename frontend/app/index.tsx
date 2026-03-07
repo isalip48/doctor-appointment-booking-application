@@ -20,25 +20,7 @@ import ActionCard from "@/components/common/ActionCard";
 export default function LandingPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [viewMode, setViewMode] = useState<"home" | "lookup">("home");
-  const [identifier, setIdentifier] = useState("");
 
-  const handleCheckAppointments = () => {
-    if (!identifier || identifier.trim().length < 9) {
-      alert("Please enter a valid NIC or Phone Number");
-      return;
-    }
-
-    const trimmed = identifier.trim();
-    const isPhone = /^0\d{9}$/.test(trimmed);
-
-    router.push({
-      pathname: "/my-bookings",
-      params: isPhone
-        ? { phoneNumber: trimmed, fromLanding: "true" }
-        : { nic: trimmed, fromLanding: "true" },
-    });
-  };
 
   return (
     <View className="flex-1 bg-white">
@@ -106,8 +88,6 @@ export default function LandingPage() {
                   through our secure platform.
                 </Text>
 
-                {/* PRIMARY CTA */}
-                {viewMode === "home" && (
                   <TouchableOpacity
                     onPress={() => router.push("/search")}
                     activeOpacity={0.8}
@@ -132,7 +112,6 @@ export default function LandingPage() {
                       </Text>
                     </LinearGradient>
                   </TouchableOpacity>
-                )}
               </View>
 
               {/* RIGHT ILLUSTRATION (WEB ONLY) */}
@@ -147,7 +126,7 @@ export default function LandingPage() {
                 icon="document-text"
                 iconColor="#10B981"
                 iconBgColor="#ECFDF5"
-                onPress={() => setViewMode("lookup")}
+                onPress={() => router.push("/my-bookings")}
               />
 
               {/* AI ASSISTANT */}

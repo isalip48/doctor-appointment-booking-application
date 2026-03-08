@@ -34,7 +34,8 @@ export const getSpecialistRecommendation = async (history: ChatMessage[]) => {
             1. If the user's symptoms are vague, ask ONE clear follow-up question about location, duration, or severity.
             2. Do not ask more than 2 questions total. 
             3. Once you have enough info, provide a 2-line explanation and the specialty in [Brackets].
-            4. Never give a medical diagnosis, only a specialty recommendation.`,
+            4. Never give a medical diagnosis, only a specialty recommendation.
+            5. Always be empathetic and professional.`,
             },
           ],
         },
@@ -80,7 +81,19 @@ export const analyzeMedicalReport = async (
             role: "user",
             parts: [
               {
-                text: "Analyze this medical report. Provide a summary of findings, mention any abnormal values, and suggest the medical specialty to visit. Put the specialty in [Brackets]. Disclaimer: Not a diagnosis.",
+                text: `Analyze this medical report carefully. Provide:
+                        1. A brief summary of the findings (2-3 sentences)
+                        2. Any abnormal or concerning values
+                        3. Recommended medical specialty to consult
+
+                        Put the specialty name in [Brackets] like [Cardiology].
+
+                        IMPORTANT: 
+                        - Be professional and empathetic
+                        - Do NOT provide a diagnosis
+                        - Only suggest which specialist to see
+                        - If the report is unclear, mention that
+                        - Give the answers point-wise for clarity`,
               },
               { inline_data: { mime_type: mimeType, data: base64Data } },
             ],
@@ -89,9 +102,18 @@ export const analyzeMedicalReport = async (
       }),
     });
 
-    if (!response.ok) throw new Error("API Analysis Failed");
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("API Error Response:", errorText);
+      throw new Error("Failed to analyze medical report");
+    }
 
     const data = await response.json();
+
+    if (!data.candidates || data.candidates.length === 0) {
+      throw new Error("No analysis results returned");
+    }
+
     const aiText = data.candidates[0].content.parts[0].text;
     const match = aiText.match(/\[(.*?)\]/);
 

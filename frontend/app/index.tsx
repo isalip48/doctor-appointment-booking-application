@@ -145,11 +145,11 @@ export default function LandingPage() {
               {/* MEDICAL REPORTS - Modern Violet Theme */}
               <ActionCard
                 title="Medical Reports"
-                description="Instantly get your reports analyzed"
-                icon="receipt"
-                iconColor="#7C3AED" // Violet 600
-                iconBgColor="#F5F3FF" // Violet 50
-                onPress={() => router.push("/medical-reports")} // Changed path for clarity
+                description="Upload and analyze lab results with AI"
+                icon="document-text"
+                iconColor="#7C3AED"
+                iconBgColor="#EDE9FE"
+                onPress={() => router.push("/medical-reports")}
               />
             </View>
           </View>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import {
   View,
   Text,
@@ -6,190 +7,409 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Platform,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import { useRouter } from "expo-router";
+
 import { Ionicons } from "@expo/vector-icons";
+
 import { LinearGradient } from "expo-linear-gradient";
+
 import * as DocumentPicker from "expo-document-picker";
-import * as FileSystem from "expo-file-system";
+
+import * as ImagePicker from "expo-image-picker";
+
 import { PLATFORM } from "@/utils/platform";
+
 import Logo from "@/components/common/Logo";
+
 import { analyzeMedicalReport } from "@/services/aiService";
+
+/*
+---------------------------------------------------------
+Helper function: Convert File to Base64 (Web only)
+---------------------------------------------------------
+
+The AI API expects files in base64 format.
+
+On web platforms, the DocumentPicker returns a File object.
+This helper converts that file into base64 using FileReader.
+
+Steps:
+1. Read file as data URL
+2. Remove the prefix (data:image/jpeg;base64,)
+3. Return only the base64 data
+*/
+
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const result = reader.result as string;
+
+      // Remove prefix like "data:image/jpeg;base64,"
+      const base64 = result.split(",")[1];
+
+      resolve(base64);
+    };
+
+    reader.onerror = reject;
+
+    reader.readAsDataURL(file);
+  });
+};
 
 export default function MedicalReportsPage() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+
+  /*
+  ---------------------------------------------------------
+  State Variables
+  ---------------------------------------------------------
+  */
+
+  // Shows loading spinner while AI analyzes report
   const [loading, setLoading] = useState(false);
+
+  // Stores AI analysis response
   const [analysis, setAnalysis] = useState<{
     message: string;
     specialty: string | null;
   } | null>(null);
+
+  // Stores uploaded file name to display to user
   const [fileName, setFileName] = useState("");
 
-  const pickDocument = async () => {
+  // Stores error messages
+  const [error, setError] = useState("");
+
+  /*
+  ---------------------------------------------------------
+  Function: handleImagePick (Mobile Gallery Upload)
+  ---------------------------------------------------------
+
+  This function allows users to upload a report from
+  their mobile gallery.
+
+  Steps:
+  1. Ask permission to access gallery
+  2. Open image picker
+  3. Convert selected image to base64
+  4. Send it to AI service
+  5. Store analysis results
+  */
+
+  const handleImagePick = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ["image/*", "application/pdf"],
+      setError("");
+
+      // Request permission to access photo gallery
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission needed",
+          "Please grant photo library access to upload reports",
+        );
+
+        return;
+      }
+
+      // Launch gallery picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+
+        quality: 0.8,
+
+        // Automatically generate base64 data
+        base64: true,
       });
 
-      if (!result.canceled) {
+      // If user selected an image
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+
+        setFileName(asset.fileName || "medical-report.jpg");
+
         setLoading(true);
-        setFileName(result.assets[0].name);
 
-        const base64 = await FileSystem.readAsStringAsync(
-          result.assets[0].uri,
-          {
-            encoding: "base64",
-          },
-        );
+        // Safety check
+        if (!asset.base64) {
+          throw new Error("No base64 data available");
+        }
 
-        const res = await analyzeMedicalReport(
-          base64,
-          result.assets[0].mimeType || "image/jpeg",
-        );
+        /*
+        Send the base64 image to AI for analysis
+        */
+
+        const res = await analyzeMedicalReport(asset.base64, "image/jpeg");
+
+        // Store AI response
         setAnalysis(res);
       }
-    } catch (err) {
-      Alert.alert("Error", "Could not analyze the document. Please try again.");
+    } catch (err: any) {
+      console.error("Image picker error:", err);
+
+      setError(err.message || "Failed to upload image");
+
+      Alert.alert(
+        "Error",
+        err.message || "Could not upload image. Please try again.",
+      );
+    } finally {
+      // Stop loading spinner
+      setLoading(false);
+    }
+  };
+
+  /*
+  ---------------------------------------------------------
+  Function: handleDocumentPick (Files / PDF Upload)
+  ---------------------------------------------------------
+
+  Allows users to upload:
+  - PDFs
+  - Images
+
+  Works differently on:
+  - Web
+  - Mobile
+
+  Web → convert File object to base64
+  Mobile → read file from device storage
+  */
+
+  const handleDocumentPick = async () => {
+    try {
+      setError("");
+
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["image/*", "application/pdf"],
+
+        copyToCacheDirectory: true,
+      });
+
+      // If user selected a file
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const asset = result.assets[0];
+
+        setFileName(asset.name);
+
+        setLoading(true);
+
+        let base64: string;
+
+        /*
+        Platform-specific handling
+        */
+
+        if (PLATFORM.ISWEB) {
+          // On web we convert the File object
+          if (result.output && result.output[0]) {
+            base64 = await fileToBase64(result.output[0]);
+          } else {
+            throw new Error("No file output available");
+          }
+        } else {
+          /*
+          On mobile we read file from device storage
+          */
+
+          const FileSystem = require("expo-file-system/legacy");
+
+          base64 = await FileSystem.readAsStringAsync(asset.uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+        }
+
+        // Send base64 file to AI for analysis
+        const res = await analyzeMedicalReport(
+          base64,
+          asset.mimeType || "image/jpeg",
+        );
+
+        setAnalysis(res);
+      }
+    } catch (err: any) {
+      console.error("Document picker error:", err);
+
+      setError(err.message || "Failed to upload document");
+
+      Alert.alert(
+        "Error",
+        err.message || "Could not analyze the document. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
   };
+
+  /*
+  ---------------------------------------------------------
+  Function: resetAnalysis
+  ---------------------------------------------------------
+
+  Clears all uploaded data and resets page
+  so the user can upload another report.
+  */
+
+  const resetAnalysis = () => {
+    setAnalysis(null);
+
+    setFileName("");
+
+    setError("");
+  };
+
+  /*
+  ---------------------------------------------------------
+  UI Layout
+  ---------------------------------------------------------
+
+  The page layout consists of:
+
+  HERO SECTION
+  - Logo
+  - Title
+  - Description
+
+  RIGHT CARD
+  - Upload UI
+  - AI analysis results
+
+  FOOTER
+  */
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
+        bounces={false}
       >
-        {/* HERO SECTION - MATCHING AI ASSISTANT */}
-        <View className="px-6 items-center pt-4 pb-6">
-          <View className="-mt-10 -mb-10">
-            <Logo size={PLATFORM.ISWEB ? 320 : 200} />
-          </View>
+        {/* HERO SECTION */}
+        {/* This is the main landing section with logo and description */}
 
-          <View className="bg-violet-100 px-4 py-1.5 rounded-full mb-4">
-            <Text className="text-violet-600 font-bold text-[10px] tracking-widest uppercase">
-              Smart Analysis
-            </Text>
-          </View>
-
-          <Text className="text-3xl font-black text-slate-900 text-center leading-tight mb-4">
-            Report <Text className="text-violet-600">Analyzer</Text>
-          </Text>
-
-          <Text className="text-slate-500 text-center text-base mb-6 px-2 leading-relaxed">
-            Upload your lab results or medical scans. DocSync AI will summarize
-            them and find the right specialist for you.
-          </Text>
-        </View>
-
-        <View className="px-6 flex-1">
-          {!analysis && !loading ? (
-            /* UPLOAD BUTTON AREA */
-            <TouchableOpacity
-              onPress={pickDocument}
-              activeOpacity={0.8}
-              className="w-full h-48 border-2 border-dashed border-slate-200 rounded-3xl items-center justify-center bg-slate-50"
-            >
-              <View className="bg-violet-600 p-4 rounded-full mb-3 shadow-lg shadow-violet-200">
-                <Ionicons name="add" size={32} color="white" />
-              </View>
-              <Text className="text-slate-900 font-bold text-lg">
-                Upload Report
-              </Text>
-              <Text className="text-slate-400 text-xs mt-1">
-                PDF, JPEG, or PNG supported
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            /* RESULTS AREA */
-            <View>
-              <View className="bg-slate-100 p-4 rounded-2xl flex-row items-center mb-6">
-                <Ionicons name="document-attach" size={24} color="#7C3AED" />
-                <Text
-                  className="ml-3 text-slate-700 font-semibold flex-1"
-                  numberOfLines={1}
-                >
-                  {fileName}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    setAnalysis(null);
-                    setFileName("");
-                  }}
-                >
-                  <Ionicons name="close-circle" size={24} color="#94A3B8" />
-                </TouchableOpacity>
-              </View>
-
-              {loading ? (
-                <View className="py-12 items-center">
-                  <ActivityIndicator size="large" color="#7C3AED" />
-                  <Text className="mt-4 text-slate-500 font-medium italic">
-                    DocSync AI is reading your report...
-                  </Text>
-                </View>
-              ) : (
-                <View className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl shadow-slate-100 mb-10">
-                  <View className="flex-row items-center mb-4">
-                    <Ionicons name="sparkles" size={20} color="#7C3AED" />
-                    <Text className="ml-2 text-slate-900 font-black text-lg">
-                      AI Summary
-                    </Text>
-                  </View>
-
-                  <Text className="text-slate-600 leading-6 text-[15px] mb-8">
-                    {analysis?.message}
-                  </Text>
-
-                  {analysis?.specialty && (
-                    <TouchableOpacity
-                      onPress={() =>
-                        router.push({
-                          pathname: "/search",
-                          params: { specialty: analysis.specialty },
-                        })
-                      }
-                      className="overflow-hidden rounded-2xl shadow-md"
-                      activeOpacity={0.9}
-                    >
-                      <LinearGradient
-                        colors={["#7C3AED", "#5B21B6"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        className="py-4 flex-row items-center justify-center"
-                      >
-                        <Ionicons name="calendar" size={20} color="white" />
-                        <Text className="text-white font-bold text-lg ml-3">
-                          Book {analysis.specialty}
-                        </Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              )}
-            </View>
-          )}
-        </View>
-
-        {/* HOME BUTTON */}
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="flex-row items-center justify-center py-4"
+        <View
+          className="relative overflow-hidden"
+          style={{ paddingTop: PLATFORM.ISWEB ? 40 : 0 }}
         >
-          <Ionicons name="arrow-back" size={18} color="#64748B" />
-          <Text className="text-slate-600 font-semibold ml-2">
-            Back to Home
-          </Text>
-        </TouchableOpacity>
+          <View
+            className={
+              PLATFORM.ISWEB ? "max-w-6xl mx-auto w-full px-12" : "px-6"
+            }
+          >
+            <View
+              className={
+                PLATFORM.ISWEB
+                  ? "flex-row items-center py-8"
+                  : "items-center pt-4 pb-10"
+              }
+            >
+              {/* LEFT SIDE CONTENT
+                  Logo + headline + explanation
+              */}
+
+              <View
+                className={
+                  PLATFORM.ISWEB ? "flex-1 pr-12" : "w-full items-center"
+                }
+              >
+                {/* Application logo */}
+                <View
+                  className={`${!PLATFORM.ISWEB && "items-center -mt-10 -mb-10"}`}
+                >
+                  <Logo size={PLATFORM.ISWEB ? 320 : 200} />
+                </View>
+
+                {/* Page title */}
+                <Text
+                  style={{ fontSize: PLATFORM.ISWEB ? 56 : 34 }}
+                  className={`font-black text-slate-900 leading-tight mb-6 ${
+                    !PLATFORM.ISWEB && "text-center"
+                  }`}
+                >
+                  Medical Report{"\n"}
+                  <Text className="text-violet-600">Analyzer</Text>
+                </Text>
+
+                {/* Description explaining the feature */}
+                <Text
+                  className={`text-slate-500 text-lg mb-8 leading-relaxed ${
+                    !PLATFORM.ISWEB && "text-center px-2"
+                  }`}
+                >
+                  Upload your lab results or medical scans. AI will analyze them
+                  and recommend the right specialist.
+                </Text>
+              </View>
+
+              {/* RIGHT SIDE CARD */}
+              {/* Contains upload UI and results */}
+
+              <View
+                className={PLATFORM.ISWEB ? "flex-[1.5] mt-20" : "w-full mt-4"}
+              >
+                <View className="bg-white rounded-3xl p-6 shadow-2xl border border-slate-200">
+                  {/* Display errors if any */}
+                  {error && (
+                    <View className="bg-red-50 p-4 rounded-2xl mb-4 border border-red-200">
+                      <Text className="text-red-700 text-sm">{error}</Text>
+                    </View>
+                  )}
+
+                  {/* UPLOAD AREA (shown when no analysis exists) */}
+
+                  {!analysis && !loading ? (
+                    <View>
+                      <Text className="text-2xl font-bold text-slate-900 mb-6">
+                        Upload Medical Report
+                      </Text>
+
+                      {/* Upload from device files */}
+                      <TouchableOpacity
+                        onPress={handleDocumentPick}
+                        activeOpacity={0.8}
+                      >
+                        <View className="border-2 border-dashed border-violet-200 rounded-2xl p-6 bg-violet-50">
+                          <View className="flex-row items-center">
+                            <View className="bg-violet-600 p-3 rounded-xl mr-4">
+                              <Ionicons
+                                name="document"
+                                size={24}
+                                color="white"
+                              />
+                            </View>
+
+                            <View className="flex-1">
+                              <Text className="text-slate-900 font-bold text-base mb-1">
+                                Upload File
+                              </Text>
+
+                              <Text className="text-slate-500 text-xs">
+                                PDF, JPEG, or PNG supported
+                              </Text>
+                            </View>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
 
         {/* FOOTER */}
-        <View className="py-8 items-center border-t border-slate-50">
+        {/* Appears at the bottom of the page */}
+
+        <View className="mt-auto py-8 border-t border-slate-50 items-center">
           <Text className="text-slate-300 text-[10px] uppercase tracking-[2px] font-bold">
             © 2024 DocSync Digital Health
           </Text>

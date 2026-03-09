@@ -28,6 +28,15 @@ export default function LandingPage() {
         bounces={false}
         showsVerticalScrollIndicator={false}
       >
+        <View className="absolute top-4 right-4 z-10">
+          <TouchableOpacity
+            onPress={() => router.push("/admin/login")}
+            className="bg-slate-900 px-4 py-2 rounded-xl flex-row items-center"
+          >
+            <Ionicons name="shield-checkmark" size={16} color="white" />
+            <Text className="text-white font-semibold ml-2 text-sm">Admin</Text>
+          </TouchableOpacity>
+        </View>
         {/* HERO SECTION */}
         <View
           className="relative overflow-hidden"

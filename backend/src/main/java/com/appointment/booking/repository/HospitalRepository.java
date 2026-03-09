@@ -1,10 +1,12 @@
 package com.appointment.booking.repository;
 
-import com.appointment.booking.entity.Hospital;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import com.appointment.booking.entity.Hospital;
 
 /**
  * Hospital Repository
@@ -47,4 +49,6 @@ public interface HospitalRepository extends JpaRepository<Hospital, Long> {
      * Finds: "National Hospital", "International Hospital", "National Cancer Institute"
      */
     List<Hospital> findByNameContainingIgnoreCase(String name);
+
+    Optional<Hospital> findByName(String name);
 }

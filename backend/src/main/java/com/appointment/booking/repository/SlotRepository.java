@@ -15,38 +15,46 @@ import com.appointment.booking.entity.Slot;
 @Repository
 public interface SlotRepository extends JpaRepository<Slot, Long> {
 
-    /**
-     * Find slot for a doctor on a specific date
-     * NEW: One slot per doctor per day (holds all 30 bookings)
-     */
-    Optional<Slot> findByDoctorAndSlotDate(Doctor doctor, LocalDate slotDate);
+        /**
+         * Find slot for a doctor on a specific date
+         * NEW: One slot per doctor per day (holds all 30 bookings)
+         */
+        Optional<Slot> findByDoctorAndSlotDate(Doctor doctor, LocalDate slotDate);
 
-    /**
-     * Find available slots by date across all doctors
-     */
-    List<Slot> findBySlotDateAndIsAvailableTrueOrderByConsultationStartTime(LocalDate slotDate);
+        /**
+         * Find available slots by date across all doctors
+         */
+        List<Slot> findBySlotDateAndIsAvailableTrueOrderByConsultationStartTime(LocalDate slotDate);
 
-    /**
-     * Search by doctor name and date
-     */
-    @Query("SELECT s FROM Slot s JOIN s.doctor d " +
-            "WHERE LOWER(d.name) LIKE LOWER(CONCAT('%', :doctorName, '%')) " +
-            "AND s.slotDate = :date " +
-            "AND s.isAvailable = true " +
-            "ORDER BY s.consultationStartTime")
-    List<Slot> searchByDoctorNameAndDate(
-            @Param("doctorName") String doctorName,
-            @Param("date") LocalDate date);
+        /**
+         * Search by doctor name and date
+         */
+        @Query("SELECT s FROM Slot s JOIN s.doctor d " +
+                        "WHERE LOWER(d.name) LIKE LOWER(CONCAT('%', :doctorName, '%')) " +
+                        "AND s.slotDate = :date " +
+                        "AND s.isAvailable = true " +
+                        "ORDER BY s.consultationStartTime")
+        List<Slot> searchByDoctorNameAndDate(
+                        @Param("doctorName") String doctorName,
+                        @Param("date") LocalDate date);
 
-    /**
-     * Search by specialization and date
-     */
-    @Query("SELECT s FROM Slot s JOIN s.doctor d " +
-            "WHERE LOWER(d.specialization) = LOWER(:specialization) " +
-            "AND s.slotDate = :date " +
-            "AND s.isAvailable = true " +
-            "ORDER BY d.hospital.name, s.consultationStartTime")
-    List<Slot> searchBySpecializationAndDate(
-            @Param("specialization") String specialization,
-            @Param("date") LocalDate date);
+        /**
+         * Search by specialization and date
+         */
+        @Query("SELECT s FROM Slot s JOIN s.doctor d " +
+                        "WHERE LOWER(d.specialization) = LOWER(:specialization) " +
+                        "AND s.slotDate = :date " +
+                        "AND s.isAvailable = true " +
+                        "ORDER BY d.hospital.name, s.consultationStartTime")
+        List<Slot> searchBySpecializationAndDate(
+                        @Param("specialization") String specialization,
+                        @Param("date") LocalDate date);
+
+        List<Slot> findByDoctor(Doctor doctor);
+
+        List<Slot> findBySlotDate(LocalDate slotDate);
+
+        boolean existsByDoctorAndSlotDate(Doctor doctor, LocalDate slotDate);
+
+        long countByIsAvailableTrue();
 }

@@ -19,7 +19,7 @@ import com.appointment.booking.entity.User;
  */
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
-    
+
     /**
      * Find all bookings for a user
      * 
@@ -27,14 +27,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * ORDER BY: Most recent bookings first
      */
     List<Booking> findByUserOrderByBookingTimeDesc(User user);
-    
+
     /**
      * Find bookings by user and status
      * 
      * WHY: Filter "Show only my confirmed appointments" or "Cancelled history"
      */
     List<Booking> findByUserAndStatus(User user, BookingStatus status);
-    
+
     /**
      * CUSTOM @Query: Find user's upcoming appointments
      * 
@@ -49,15 +49,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * Sort by soonest date first
      */
     @Query("SELECT b FROM Booking b JOIN b.slot s " +
-           "WHERE b.user.id = :userId " +
-           "AND b.status = 'CONFIRMED' " +
-           "AND s.slotDate >= :today " +
-           "ORDER BY s.slotDate, s.consultationStartTime")
+            "WHERE b.user.id = :userId " +
+            "AND b.status = 'CONFIRMED' " +
+            "AND s.slotDate >= :today " +
+            "ORDER BY s.slotDate, s.consultationStartTime")
     List<Booking> findUpcomingBookingsByUser(
-        @Param("userId") Long userId,
-        @Param("today") LocalDate today
-    );
-    
+            @Param("userId") Long userId,
+            @Param("today") LocalDate today);
+
     /**
      * CUSTOM @Query: Find past appointments
      * 
@@ -65,14 +64,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * DIFFERENCE: slotDate < :today (in the past)
      */
     @Query("SELECT b FROM Booking b JOIN b.slot s " +
-           "WHERE b.user.id = :userId " +
-           "AND s.slotDate < :today " +
-           "ORDER BY s.slotDate DESC, s.consultationStartTime DESC")
+            "WHERE b.user.id = :userId " +
+            "AND s.slotDate < :today " +
+            "ORDER BY s.slotDate DESC, s.consultationStartTime DESC")
     List<Booking> findPastBookingsByUser(
-        @Param("userId") Long userId,
-        @Param("today") LocalDate today
-    );
-    
+            @Param("userId") Long userId,
+            @Param("today") LocalDate today);
+
     /**
      * Count bookings for a specific slot
      * 
@@ -80,6 +78,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
      * Double-check that bookedSlots counter is accurate
      */
     @Query("SELECT COUNT(b) FROM Booking b " +
-           "WHERE b.slot.id = :slotId AND b.status = 'CONFIRMED'")
+            "WHERE b.slot.id = :slotId AND b.status = 'CONFIRMED'")
     Long countConfirmedBookingsBySlot(@Param("slotId") Long slotId);
+
+    List<Booking> findByStatus(String status);
+
+    long countByStatus(String status);
 }

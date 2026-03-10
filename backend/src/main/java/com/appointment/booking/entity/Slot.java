@@ -3,6 +3,8 @@ package com.appointment.booking.entity;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -64,6 +66,7 @@ public class Slot {
     @Column(nullable = false)
     private Boolean isAvailable = true;
 
+    @JsonIgnoreProperties({ "hospital", "slots", "qualifications", "experienceYears", "consultationFee" })
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "doctor_id", nullable = false)
     private Doctor doctor;

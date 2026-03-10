@@ -51,7 +51,7 @@ public class AdminService {
         hospital.setAddress(hospitalDTO.getAddress());
         hospital.setCity(hospitalDTO.getCity());
         hospital.setPhoneNumber(hospitalDTO.getPhoneNumber());
-        
+
         Hospital saved = hospitalRepository.save(hospital);
         return convertHospitalToDTO(saved);
     }
@@ -66,26 +66,21 @@ public class AdminService {
 
     public DoctorAdminDTO getDoctorById(Long id) {
         Doctor doctor = doctorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+                .orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + id));
         return convertToDTO(doctor);
     }
 
     @Transactional
     public DoctorAdminDTO createDoctor(DoctorAdminDTO doctorDTO) {
         Doctor doctor = new Doctor();
-        doctor.setName(doctorDTO.getName());
-        doctor.setSpecialization(doctorDTO.getSpecialization());
-        doctor.setQualifications(doctorDTO.getQualifications());
-        doctor.setExperienceYears(doctorDTO.getExperienceYears());
-        doctor.setConsultationFee(doctorDTO.getConsultationFee());
-        
-        // Set hospital relationship
+        copyDtoToEntity(doctorDTO, doctor);
+
         if (doctorDTO.getHospitalId() != null) {
             Hospital hospital = hospitalRepository.findById(doctorDTO.getHospitalId())
                     .orElseThrow(() -> new RuntimeException("Hospital not found"));
             doctor.setHospital(hospital);
         }
-        
+
         Doctor saved = doctorRepository.save(doctor);
         return convertToDTO(saved);
     }
@@ -94,20 +89,15 @@ public class AdminService {
     public DoctorAdminDTO updateDoctor(Long id, DoctorAdminDTO doctorDTO) {
         Doctor doctor = doctorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
-        
-        doctor.setName(doctorDTO.getName());
-        doctor.setSpecialization(doctorDTO.getSpecialization());
-        doctor.setQualifications(doctorDTO.getQualifications());
-        doctor.setExperienceYears(doctorDTO.getExperienceYears());
-        doctor.setConsultationFee(doctorDTO.getConsultationFee());
-        
-        // Update hospital relationship
+
+        copyDtoToEntity(doctorDTO, doctor);
+
         if (doctorDTO.getHospitalId() != null) {
             Hospital hospital = hospitalRepository.findById(doctorDTO.getHospitalId())
                     .orElseThrow(() -> new RuntimeException("Hospital not found"));
             doctor.setHospital(hospital);
         }
-        
+
         Doctor updated = doctorRepository.save(doctor);
         return convertToDTO(updated);
     }
@@ -125,13 +115,8 @@ public class AdminService {
 
         for (var dto : request.getDoctors()) {
             try {
-                // Validate
                 if (dto.getName() == null || dto.getName().trim().isEmpty()) {
                     errors.add("Doctor name is required");
-                    continue;
-                }
-                if (dto.getSpecialization() == null || dto.getSpecialization().trim().isEmpty()) {
-                    errors.add("Specialization is required for " + dto.getName());
                     continue;
                 }
 
@@ -141,8 +126,7 @@ public class AdminService {
                 doctor.setQualifications(dto.getQualifications());
                 doctor.setExperienceYears(dto.getExperienceYears());
                 doctor.setConsultationFee(dto.getConsultationFee());
-                
-                // Find or create hospital by name
+
                 if (dto.getHospitalName() != null && !dto.getHospitalName().trim().isEmpty()) {
                     Hospital hospital = hospitalRepository.findByName(dto.getHospitalName())
                             .orElseGet(() -> {
@@ -154,7 +138,7 @@ public class AdminService {
                             });
                     doctor.setHospital(hospital);
                 }
-                
+
                 doctors.add(doctor);
                 successCount++;
             } catch (Exception e) {
@@ -169,7 +153,7 @@ public class AdminService {
         result.put("failed", errors.size());
         result.put("errors", errors);
         result.put("message", successCount + " doctors imported successfully");
-        
+
         return result;
     }
 
@@ -180,69 +164,58 @@ public class AdminService {
         Doctor doctor = doctorRepository.findById(request.getDoctorId())
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
 
-        List<Slot> slots = new ArrayList<>();
+        List<Slot> slotsToSave = new ArrayList<>();
         LocalDate currentDate = request.getStartDate();
         int totalGenerated = 0;
 
-        // Default values
-        Integer maxBookings = request.getMaxBookingsPerDay() != null ? 
-            request.getMaxBookingsPerDay() : 30;
-        Integer minutesPerPatient = request.getMinutesPerPatient() != null ? 
-            request.getMinutesPerPatient() : 10;
-        LocalTime startTime = request.getConsultationStartTime() != null ? 
-            request.getConsultationStartTime() : LocalTime.of(9, 0);
+        // Apply Entity constraints
+        LocalTime startTime = request.getConsultationStartTime() != null ? request.getConsultationStartTime()
+                : LocalTime.of(9, 0);
 
         while (!currentDate.isAfter(request.getEndDate())) {
-            // Check if slot already exists for this doctor on this date
-            boolean slotExists = slotRepository.existsByDoctorAndSlotDate(doctor, currentDate);
-            
-            if (!slotExists) {
-                Slot slot = new Slot();
-                slot.setDoctor(doctor);
-                slot.setSlotDate(currentDate);
-                slot.setConsultationStartTime(startTime);
-                slot.setMaxBookingsPerDay(maxBookings);
-                slot.setCurrentBookings(0);
-                slot.setMinutesPerPatient(minutesPerPatient);
-                slot.setIsAvailable(true);
-                
-                slots.add(slot);
+            // Respect the Unique Constraint (doctor_id + slot_date)
+            if (!slotRepository.existsByDoctorAndSlotDate(doctor, currentDate)) {
+                // Using the specific constructor from your Entity
+                Slot slot = new Slot(null, currentDate, startTime, doctor);
+                slotsToSave.add(slot);
                 totalGenerated++;
             }
-            
             currentDate = currentDate.plusDays(1);
         }
 
-        if (!slots.isEmpty()) {
-            slotRepository.saveAll(slots);
+        if (!slotsToSave.isEmpty()) {
+            slotRepository.saveAll(slotsToSave);
         }
 
         Map<String, Object> result = new HashMap<>();
         result.put("slotsGenerated", totalGenerated);
         result.put("doctor", doctor.getName());
         result.put("dateRange", request.getStartDate() + " to " + request.getEndDate());
-        result.put("maxBookingsPerDay", maxBookings);
-        result.put("minutesPerPatient", minutesPerPatient);
-        result.put("consultationStartTime", startTime.toString());
-        
         return result;
     }
 
+    /**
+     * FIXED: This method now ensures that even if findByDoctorAndSlotDate
+     * returns an Optional, it is flattened into a List so the frontend
+     * always receives an array of objects containing the 'doctor' property.
+     */
     public List<Slot> getSlots(Long doctorId, String date) {
         if (doctorId != null && date != null) {
-            LocalDate localDate = LocalDate.parse(date);
             Doctor doctor = doctorRepository.findById(doctorId)
                     .orElseThrow(() -> new RuntimeException("Doctor not found"));
-            return slotRepository.findByDoctorAndSlotDate(doctor, localDate)
-                    .map(Collections::singletonList)
+            return slotRepository.findByDoctorAndSlotDate(doctor, LocalDate.parse(date))
+                    .map(List::of)
                     .orElse(Collections.emptyList());
+
         } else if (doctorId != null) {
+            // ← was getReferenceById() which throws outside a transaction
             Doctor doctor = doctorRepository.findById(doctorId)
                     .orElseThrow(() -> new RuntimeException("Doctor not found"));
             return slotRepository.findByDoctor(doctor);
+
         } else if (date != null) {
-            LocalDate localDate = LocalDate.parse(date);
-            return slotRepository.findBySlotDate(localDate);
+            return slotRepository.findBySlotDate(LocalDate.parse(date));
+
         } else {
             return slotRepository.findAll();
         }
@@ -256,24 +229,19 @@ public class AdminService {
     // ============ BOOKING MANAGEMENT ============
 
     public List<Booking> getAllBookings(String status) {
-        if (status != null && !status.isEmpty()) {
-            // Assuming you have a status field in Booking
-            return bookingRepository.findAll().stream()
-                    .filter(b -> status.equalsIgnoreCase("CONFIRMED"))
+        List<Booking> all = bookingRepository.findAll();
+        if (status != null && !status.trim().isEmpty()) {
+            return all.stream()
+                    .filter(b -> b.getStatus() != null && b.getStatus().name().equalsIgnoreCase(status))
                     .collect(Collectors.toList());
         }
-        return bookingRepository.findAll();
+        return all;
     }
 
     public Map<String, Object> getBookingStats() {
-        long totalBookings = bookingRepository.count();
-
         Map<String, Object> stats = new HashMap<>();
-        stats.put("total", totalBookings);
-        stats.put("upcoming", totalBookings); // Adjust based on your logic
-        stats.put("cancelled", 0); // Adjust based on your logic
-        stats.put("completed", 0); // Adjust based on your logic
-        
+        stats.put("total", bookingRepository.count());
+        // Add more specific counts if your Booking entity has a status field
         return stats;
     }
 
@@ -281,15 +249,12 @@ public class AdminService {
     public void cancelBooking(Long id) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
-        
-        // Make slot available again
+
         if (booking.getSlot() != null) {
             Slot slot = booking.getSlot();
-            slot.cancelSlot(); // Uses your custom cancelSlot method
+            slot.cancelSlot(); // Uses logic: currentBookings--
             slotRepository.save(slot);
         }
-        
-        // Delete the booking
         bookingRepository.delete(booking);
     }
 
@@ -297,38 +262,42 @@ public class AdminService {
 
     public Map<String, Object> getDashboardStats() {
         Map<String, Object> stats = new HashMap<>();
-        
         stats.put("totalDoctors", doctorRepository.count());
         stats.put("totalHospitals", hospitalRepository.count());
         stats.put("totalSlots", slotRepository.count());
         stats.put("availableSlots", slotRepository.countByIsAvailableTrue());
         stats.put("totalBookings", bookingRepository.count());
-        
         return stats;
     }
 
-    // ============ HELPER METHODS ============
+    // ============ HELPERS ============
+
+    private void copyDtoToEntity(DoctorAdminDTO dto, Doctor entity) {
+        entity.setName(dto.getName());
+        entity.setSpecialization(dto.getSpecialization());
+        entity.setQualifications(dto.getQualifications());
+        entity.setExperienceYears(dto.getExperienceYears());
+        entity.setConsultationFee(dto.getConsultationFee());
+    }
 
     private DoctorAdminDTO convertToDTO(Doctor doctor) {
         return new DoctorAdminDTO(
-            doctor.getId(),
-            doctor.getName(),
-            doctor.getSpecialization(),
-            doctor.getQualifications(),
-            doctor.getExperienceYears(),
-            doctor.getConsultationFee(),
-            doctor.getHospital() != null ? doctor.getHospital().getId() : null,
-            doctor.getHospital() != null ? doctor.getHospital().getName() : null
-        );
+                doctor.getId(),
+                doctor.getName(),
+                doctor.getSpecialization(),
+                doctor.getQualifications(),
+                doctor.getExperienceYears(),
+                doctor.getConsultationFee(),
+                doctor.getHospital() != null ? doctor.getHospital().getId() : null,
+                doctor.getHospital() != null ? doctor.getHospital().getName() : null);
     }
 
     private HospitalDTO convertHospitalToDTO(Hospital hospital) {
         return new HospitalDTO(
-            hospital.getId(),
-            hospital.getName(),
-            hospital.getAddress(),
-            hospital.getCity(),
-            hospital.getPhoneNumber()
-        );
+                hospital.getId(),
+                hospital.getName(),
+                hospital.getAddress(),
+                hospital.getCity(),
+                hospital.getPhoneNumber());
     }
 }

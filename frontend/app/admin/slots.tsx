@@ -46,7 +46,7 @@ export default function ManageSlots() {
 
   // ============ STATE MANAGEMENT ============
   // State holds the current data and UI status
-  
+
   const [doctors, setDoctors] = useState<Doctor[]>([]); // List of all doctors
   const [slots, setSlots] = useState<Slot[]>([]); // List of all slots
   const [loading, setLoading] = useState(true); // Loading indicator
@@ -92,6 +92,7 @@ export default function ManageSlots() {
    * FETCH SLOTS
    * Purpose: Get all slots from backend, optionally filtered by doctor
    * Parameters: doctorId (optional) - if provided, only get slots for that doctor
+   * Fix: Backend might return single slot or array, so we normalize it
    */
   const fetchSlots = async (doctorId?: number) => {
     try {
@@ -100,10 +101,28 @@ export default function ManageSlots() {
         ? `/admin/slots?doctorId=${doctorId}`
         : "/admin/slots";
       const response = await apiClient.get(url);
-      setSlots(response.data);
+
+      // FIX: Ensure we always have an array
+      const slotsData = response.data;
+
+      // If backend returns single object, wrap it in array
+      if (slotsData && !Array.isArray(slotsData)) {
+        setSlots([slotsData]);
+      }
+      // If backend returns array, use it
+      else if (Array.isArray(slotsData)) {
+        setSlots(slotsData);
+      }
+      // If null/undefined, set empty array
+      else {
+        setSlots([]);
+      }
+
+      console.log("Fetched slots:", slotsData); // Debug log
     } catch (error) {
       console.error("Failed to fetch slots:", error);
       Alert.alert("Error", "Failed to load slots");
+      setSlots([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -201,7 +220,7 @@ export default function ManageSlots() {
       // Show success message
       Alert.alert(
         "Success",
-        `Generated ${response.data.slotsGenerated} slots for ${response.data.doctor}`
+        `Generated ${response.data.slotsGenerated} slots for ${response.data.doctor}`,
       );
 
       // Clean up and refresh
@@ -227,8 +246,9 @@ export default function ManageSlots() {
    * Why: Allow admin to remove slots if doctor is unavailable
    */
   const handleDeleteSlot = (slot: Slot) => {
-    const message = `Delete slot for ${slot.doctor.name} on ${new Date(
-      slot.slotDate
+    const doctorName = slot.doctor?.name ?? "this doctor";
+    const message = `Delete slot for ${doctorName} on ${new Date(
+      slot.slotDate,
     ).toLocaleDateString()}?`;
 
     if (PLATFORM.ISWEB) {
@@ -492,9 +512,7 @@ export default function ManageSlots() {
               >
                 <LinearGradient
                   colors={
-                    generating
-                      ? ["#94A3B8", "#94A3B8"]
-                      : ["#10B981", "#059669"]
+                    generating ? ["#94A3B8", "#94A3B8"] : ["#10B981", "#059669"]
                   }
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -559,10 +577,10 @@ export default function ManageSlots() {
                 <View className="flex-row items-start justify-between mb-3">
                   <View className="flex-1">
                     <Text className="text-lg font-bold text-slate-900">
-                      {slot.doctor.name}
+                       {slot.doctor?.name ?? "Unknown Doctor"}
                     </Text>
                     <Text className="text-indigo-600 font-semibold text-sm">
-                      {slot.doctor.specialization}
+                      {slot.doctor?.specialization ?? "General"}
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -614,9 +632,7 @@ export default function ManageSlots() {
                       >
                         <Text
                           className={`text-xs font-bold ${
-                            slot.isAvailable
-                              ? "text-green-700"
-                              : "text-red-700"
+                            slot.isAvailable ? "text-green-700" : "text-red-700"
                           }`}
                         >
                           {slot.isAvailable ? "Available" : "Full"}

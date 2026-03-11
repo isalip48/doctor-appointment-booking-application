@@ -3,6 +3,8 @@ package com.appointment.booking.entity;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -58,7 +60,8 @@ public class User {
     public enum Gender {
         MALE, FEMALE, OTHER
     }
-    
+
+    @JsonIgnore
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Booking> bookings = new ArrayList<>();
     

@@ -329,7 +329,7 @@ export default function ManageSlots() {
         <View className="bg-white border-b border-slate-200 px-6 py-4">
           <View className="flex-row items-center justify-between">
             {/* Back Button */}
-            <TouchableOpacity onPress={() => router.back()}>
+            <TouchableOpacity onPress={() => router.push("/admin/dashboard")}>
               <Ionicons name="arrow-back" size={24} color="#4F46E5" />
             </TouchableOpacity>
 

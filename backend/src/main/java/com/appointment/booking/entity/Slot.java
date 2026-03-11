@@ -66,7 +66,7 @@ public class Slot {
     @Column(nullable = false)
     private Boolean isAvailable = true;
 
-    @JsonIgnoreProperties({ "hospital", "slots", "qualifications", "experienceYears", "consultationFee" })
+    @JsonIgnoreProperties({ "slots", "qualifications", "experienceYears", "consultationFee" })
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "doctor_id", nullable = false)
     private Doctor doctor;

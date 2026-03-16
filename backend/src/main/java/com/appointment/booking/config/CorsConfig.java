@@ -23,23 +23,27 @@ public class CorsConfig {
         
         // Allow requests from these origins (domains)
         config.setAllowedOrigins(Arrays.asList(
-            "https://docsync-frontend.vercel.app",         // Production Vercel
-            "https://docsync-frontend-*.vercel.app",       // Vercel preview deployments (won't work with wildcard, but we'll fix later)
-            "http://localhost:8081",                        // Local Expo development
-            "http://localhost:19006",                       // Local Expo Web
-            "http://localhost:19000"                        // Alternative Expo port
+            // Vercel Production Domains (YOUR ACTUAL DOMAINS)
+            "https://doctor-appointment-booking-applicat-gamma.vercel.app",
+            "https://doctor-appointment-booking-applic-git-f7086b-isalip48s-projects.vercel.app",
+            "https://doctor-appointment-booking-application-5giuuj4tf.vercel.app",
+            
+            // Local Development
+            "http://localhost:8081",
+            "http://localhost:19006",
+            "http://localhost:19000"
         ));
         
         // Allow these HTTP methods
         config.setAllowedMethods(Arrays.asList(
-            "GET",      // Read data
-            "POST",     // Create data
-            "PUT",      // Update data
-            "DELETE",   // Delete data
-            "OPTIONS"   // Preflight requests (browser checks)
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "OPTIONS"
         ));
         
-        // Allow all headers (Authorization, Content-Type, etc.)
+        // Allow all headers
         config.setAllowedHeaders(Arrays.asList("*"));
         
         // Allow credentials (cookies, auth tokens)

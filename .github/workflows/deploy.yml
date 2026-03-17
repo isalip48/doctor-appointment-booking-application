@@ -73,7 +73,8 @@ jobs:
         run: |
           npm install -g vercel@latest
           cd frontend
-          vercel build --prod --token=$VERCEL_TOKEN --yes
-          vercel deploy --prod --prebuilt --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID
+          # We skip 'vercel build' because 'npx expo export' already created our artifacts.
+          # We point to the 'dist' folder and tell Vercel it's already prebuilt.
+          vercel deploy dist --prod --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID --prebuilt
       - name: Deployment Complete
         run: echo "✅ Frontend deployed to Vercel"

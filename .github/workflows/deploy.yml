@@ -72,9 +72,8 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           npm install -g vercel@latest
-          cd frontend
-          # Pointing directly to the exported 'dist' folder
-          vercel deploy dist --prod --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID --prebuilt
-
+          # No manual 'npx expo export' before this
+          # We just point Vercel to the folder and let it handle the build
+          vercel deploy frontend --prod --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID
       - name: Deployment Complete
         run: echo "✅ Frontend deployed to Vercel"

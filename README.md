@@ -1,7 +1,4 @@
-<create_file>
-<path>README.md</path>
-<description>Creating comprehensive README.md file in the project root</description>
-<content># 🏥 DocSync - Doctor Appointment Booking System
+# 🏥 DocSync - Doctor Appointment Booking System
 
 A full-stack web application for booking doctor appointments with AI-powered medical assistance, built with Spring Boot and React Native Web.
 
@@ -103,8 +100,9 @@ doctor-appointment-booking-application/
 │       └── deploy.yml              # CI/CD pipeline
 │
 └── README.md
-🚀 Getting Started
-Prerequisites
+
+## 🚀 Getting Started
+## Prerequisites
 
 Java 21 or higher
 Node.js 18 or higher

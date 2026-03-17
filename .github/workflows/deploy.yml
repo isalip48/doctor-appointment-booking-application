@@ -71,12 +71,9 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
+          cd frontend
           npm install -g vercel@latest
-          
-          # 1. Stay in the REPO ROOT (don't 'cd' into frontend)
-          # 2. Deploy the 'dist' folder by its full relative path
-          # 3. Use --name or ensure the PROJECT_ID is linked to the dashboard project
-          vercel deploy frontend/dist --prod --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID
+          vercel deploy dist --prod --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID    
       
       - name: Deployment Complete
         run: echo "✅ Frontend deployed to Vercel"

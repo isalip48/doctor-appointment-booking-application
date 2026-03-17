@@ -75,8 +75,11 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
+          # Install CLI globally in the runner
+          npm install -g vercel@latest
+          # Navigate into the exported folder
           cd frontend/dist
-          # Deploying '.' (the current directory) ensures Vercel doesn't misinterpret the path
+          # Deploy the contents of 'dist' to Vercel
           vercel deploy --prod --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID
 
       - name: Deployment Complete

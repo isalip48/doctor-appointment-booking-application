@@ -23,11 +23,11 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           cd backend
-          railway up --detach
+          # Specify the exact service name to avoid the "Multiple services found" error
+          railway up --detach --service doctor-appointment-booking-application
 
       - name: Deployment Complete
-        run: |
-          echo "✅ Backend deployed to Railway"
+        run: echo "✅ Backend deployed to Railway"
 
   deploy-frontend:
     name: Deploy Frontend to Vercel

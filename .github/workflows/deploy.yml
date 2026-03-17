@@ -73,7 +73,9 @@ jobs:
         run: |
            npm install -g vercel@latest
             cd frontend
-            vercel deploy dist --prod --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID    
+            # Use the --prebuilt flag to skip Vercel's internal npm install/build
+            # This uploads the 'dist' folder you just created with Expo
+            vercel deploy ./dist --prod --token=$VERCEL_TOKEN --yes   
       
       - name: Deployment Complete
         run: echo "✅ Frontend deployed to Vercel"

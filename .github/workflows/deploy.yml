@@ -74,7 +74,7 @@ jobs:
           npm install -g vercel@latest
           # We run the command from the root, but point the context to 'frontend'
           # Then we tell it to deploy the 'dist' folder found inside that context
-          vercel deploy ./dist --prod --cwd ./frontend --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID
+          vercel deploy dist --prod --cwd frontend --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID
 
       - name: Deployment Complete
         run: echo "✅ Frontend deployed to Vercel"

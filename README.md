@@ -100,9 +100,9 @@ doctor-appointment-booking-application/
 │       └── deploy.yml              # CI/CD pipeline
 │
 └── README.md
-
+```
 ## 🚀 Getting Started
-## Prerequisites
+### Prerequisites
 
 Java 21 or higher
 Node.js 18 or higher
@@ -136,7 +136,7 @@ Frontend Setup
 Install dependencies
 
 bash   cd frontend
-   npm install
+npm install
 
 Configure environment
 Create frontend/.env:
@@ -147,9 +147,8 @@ env   EXPO_PUBLIC_API_URL=http://localhost:8080/api
 Run the frontend
 
 bash   npx expo start
-```
 
-   Press `w` to open in web browser at: `http://localhost:8081`
+Press `w` to open in web browser at: `http://localhost:8081`
 
 ## 📋 API Endpoints
 
@@ -199,7 +198,9 @@ DELETE /api/admin/slots/{id}
 GET    /api/admin/bookings
 PUT    /api/admin/bookings/{id}/status
 DELETE /api/admin/bookings/{id}
-🔐 Admin Access
+```
+
+## 🔐 Admin Access
 Default Credentials:
 
 Username: admin
@@ -207,18 +208,18 @@ Password: admin123
 
 Access: Navigate to /admin/login on the frontend.
 ⚠️ Important: Change these credentials in production!
-📊 Database Schema
-Main Tables
-hospitals
 
+## 📊 Database Schema
+### Main Tables
+
+#### hospitals
 id (Primary Key)
 name
 address
 phone
 created_at
 
-doctors
-
+#### doctors
 id (Primary Key)
 name
 specialization
@@ -229,8 +230,7 @@ experience
 qualifications
 created_at
 
-time_slots
-
+#### time_slots
 id (Primary Key)
 doctor_id (Foreign Key)
 slot_date
@@ -239,8 +239,7 @@ end_time
 is_booked
 created_at
 
-bookings
-
+#### bookings
 id (Primary Key)
 slot_id (Foreign Key)
 patient_nic
@@ -250,30 +249,29 @@ patient_email
 status (PENDING, CONFIRMED, CANCELLED)
 created_at
 
-🎨 Features Deep Dive
-AI Medical Assistant
+## 🎨 Features Deep Dive
+### AI Medical Assistant
 The AI assistant helps patients identify which medical specialist they should consult based on their symptoms.
-How it works:
 
+#### How it works:
 Patient describes symptoms in natural language
 AI asks clarifying questions (max 2 questions)
 AI recommends appropriate specialist (e.g., Cardiologist, Dermatologist)
 Patient can then search for that specialty
 
-Technology: Google Gemini 2.5 Flash API
+#### Technology: Google Gemini 2.5 Flash API
 Medical Report Analyzer
 Upload medical reports (PDF/images) and get AI-powered analysis.
-Features:
 
+#### Features:
 Extract key findings from reports
 Identify abnormal values
 Recommend appropriate specialist
 Professional, empathetic responses
 
-Slot Generation System
+### Slot Generation System
 Admins can bulk-generate appointment slots:
-Configuration:
-
+#### Configuration:
 Select doctor
 Choose date
 Set start time (e.g., 09:00)
@@ -290,8 +288,9 @@ Phone Number
 Name
 Email
 
-Booking Retrieval: Use NIC + Phone to view all bookings.
-🚀 Deployment
+#### Booking Retrieval: Use NIC + Phone to view all bookings.
+
+## 🚀 Deployment
 Automated Deployment (CI/CD)
 Every push to main branch automatically:
 

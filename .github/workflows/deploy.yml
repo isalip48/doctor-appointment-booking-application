@@ -72,13 +72,11 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           npm install -g vercel@latest
-          cd frontend
           
-          # Move Expo's 'dist' to the folder Vercel expects for prebuilt deploys
-          mkdir -p .vercel/output
-          cp -r dist/* .vercel/output/
-          
-          # Deploy without Vercel trying to run its own 'npm install'
-          vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID
+          # 1. Stay in the REPO ROOT (don't 'cd' into frontend)
+          # 2. Deploy the 'dist' folder by its full relative path
+          # 3. Use --name or ensure the PROJECT_ID is linked to the dashboard project
+          vercel deploy frontend/dist --prod --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID
+      
       - name: Deployment Complete
         run: echo "✅ Frontend deployed to Vercel"

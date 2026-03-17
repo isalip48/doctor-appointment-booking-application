@@ -23,7 +23,6 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           cd backend
-          railway link doctor-appointment-booking-application-production
           railway up --detach
 
       - name: Deployment Complete

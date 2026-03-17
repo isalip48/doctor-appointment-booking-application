@@ -23,7 +23,6 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           cd backend
-          # Specify the exact service name to avoid the "Multiple services found" error
           railway up --detach --service doctor-appointment-booking-application
 
       - name: Deployment Complete
@@ -42,11 +41,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "18"
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install Dependencies
+        run: |
+          cd frontend
+          npm ci
 
       - name: Install Vercel CLI
-        run: npm install -g vercel
+        run: npm install -g vercel@latest
 
-      - name: Pull Vercel Environment
+      - name: Pull Vercel Environment Information
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -55,7 +61,7 @@ jobs:
           cd frontend
           vercel pull --yes --environment=production --token=$VERCEL_TOKEN
 
-      - name: Build Project
+      - name: Build Project Artifacts
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -74,5 +80,4 @@ jobs:
           vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
 
       - name: Deployment Complete
-        run: |
-          echo "✅ Frontend deployed to Vercel"
+        run: echo "✅ Frontend deployed to Vercel"

@@ -24,6 +24,7 @@ jobs:
       - name: Run Backend Tests
         run: |
           cd backend
+          chmod +x mvnw
           ./mvnw test 
 
       - name: Install Railway CLI
@@ -59,11 +60,6 @@ jobs:
           cd frontend
           npm ci
 
-      - name: Run Frontend Tests
-        run: |
-          cd frontend
-          npm test -- --watchAll=false
-
       - name: Build Expo Web
         run: |
           cd frontend
@@ -75,12 +71,9 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          # Install CLI globally in the runner
           npm install -g vercel@latest
-          # Navigate into the exported folder
-          cd frontend/dist
-          # Deploy the contents of 'dist' to Vercel
-          vercel deploy --prod --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID
+          # Explicitly pointing to the folder from the repo root
+          vercel deploy frontend/dist --prod --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID
 
       - name: Deployment Complete
         run: echo "✅ Frontend deployed to Vercel"

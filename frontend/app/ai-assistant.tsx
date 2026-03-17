@@ -110,7 +110,6 @@ export default function AIAssistantPage() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* HERO SECTION */}
           <View
             className="relative overflow-hidden"
             style={{ paddingTop: PLATFORM.ISWEB ? 40 : 0 }}

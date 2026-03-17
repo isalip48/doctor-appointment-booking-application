@@ -72,8 +72,8 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           npm install -g vercel@latest
-          # Using the path directly from the root with --prebuilt
-          vercel deploy frontend/dist --prod --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID --prebuilt
-
+          cd frontend
+          vercel build --prod --token=$VERCEL_TOKEN --yes
+          vercel deploy --prod --prebuilt --token=$VERCEL_TOKEN --yes --scope $VERCEL_ORG_ID
       - name: Deployment Complete
         run: echo "✅ Frontend deployed to Vercel"

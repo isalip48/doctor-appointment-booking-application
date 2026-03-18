@@ -147,7 +147,6 @@ export default function LandingPage() {
                 iconColor="#F59E0B" // Amber 500
                 iconBgColor="#334155" // Slate 700
                 gradient={["#1E293B", "#0F172A"]} // Slate 800 to 900
-                badgeText="BETA"
                 onPress={() => router.push("/ai-assistant")}
               />
 

@@ -1,19 +1,24 @@
 import { Stack } from "expo-router";
-import { useFonts } from 'expo-font';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { useEffect } from 'react';
 import "../global.css";
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    ...Ionicons.font,  // This explicitly bundles the Ionicons font
-  });
-  if (!fontsLoaded) {
-    return null;
-  }
+  useEffect(() => {
+    // Load Ionicons from CDN for web
+    if (typeof document !== 'undefined') {
+      const link = document.createElement('link');
+      link.href = 'https://cdn.jsdelivr.net/npm/@expo/vector-icons@13.0.0/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf';
+      link.rel = 'preload';
+      link.as = 'font';
+      link.type = 'font/ttf';
+      link.crossOrigin = 'anonymous';
+      document.head.appendChild(link);
+    }
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -122,7 +122,7 @@ doctor-appointment-booking-application/
 
 ### Prerequisites
 
-- Java 21 or higher
+- Java 18 or higher
 - Node.js 18 or higher
 - PostgreSQL 14 or higher
 - Maven 3.8 or higher

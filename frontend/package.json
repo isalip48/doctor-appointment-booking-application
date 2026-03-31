@@ -8,6 +8,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "build": "expo export -p web && node post-export.js",
+    "vercel-build": "expo export -p web && node post-export.js",
     "test": "echo 'No tests yet' && exit 0"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-name: Deploy to Railway and Vercel
+name: Deploy to Koyeb and Vercel
 
 on:
   push:
@@ -28,12 +28,17 @@ jobs:
           ./mvnw test
 
       - name: Install Koyeb CLI
-        run: curl -fsSL https://raw.githubusercontent.com/koyeb/koyeb-cli/master/install.sh | sh
+        run: |
+          # Manually download and install to a global PATH location
+          curl -L https://github.com/koyeb/koyeb-cli/releases/latest/download/koyeb-linux-amd64 -o koyeb
+          chmod +x koyeb
+          sudo mv koyeb /usr/local/bin/koyeb
 
       - name: Deploy to Koyeb
         env:
           KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
         run: |
+          # Using the confirmed app/service names: logical-daryn/doctor-appointment-booking-application
           koyeb service redeploy logical-daryn/doctor-appointment-booking-application
 
       - name: Deployment Complete
@@ -62,7 +67,8 @@ jobs:
       - name: Build Expo Web
         run: |
           cd frontend
-          npx expo export --platform web
+          # CRITICAL: This runs 'expo export' AND your 'post-export.js' renaming logic
+          npm run build 
 
       - name: Deploy to Vercel
         env:
@@ -70,10 +76,9 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          npm install -g vercel@latest
+           npm install -g vercel@latest
            cd frontend
-           # Use the --prebuilt flag to skip Vercel's internal npm install/build
-           # This uploads the 'dist' folder you just created with Expo
+           # Upload the 'dist' folder which now has the vendor assets fix
            vercel deploy ./dist --prod --token=$VERCEL_TOKEN --yes
 
       - name: Deployment Complete

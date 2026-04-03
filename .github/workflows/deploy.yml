@@ -72,9 +72,12 @@ jobs:
         run: |
            npm install -g vercel@latest
            cd frontend
-           # Upload the source to Vercel and let their cloud cluster securely build it
-           # with the correct output paths and environment configurations!
-           vercel deploy --prod --token=$VERCEL_TOKEN --yes
+           # First, safely link the project inside the action container
+           vercel pull --yes --environment=production --token=$VERCEL_TOKEN
+           # Second, securely run the Vercel Build Step locally (which triggers our npm run build and packaging)
+           vercel build --prod --token=$VERCEL_TOKEN
+           # Finally, upload exactly the compiled Vercel Output API securely to production
+           vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN --yes
 
       - name: Deployment Complete
         run: echo "✅ Frontend deployed to Vercel"

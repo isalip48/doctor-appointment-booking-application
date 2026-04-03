@@ -1,4 +1,4 @@
-name: Deploy to Railway and Vercel
+name: Deploy to Koyeb and Vercel
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   deploy-backend:
-    name: Deploy Backend to Railway
+    name: Deploy Backend to Koyeb
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -18,7 +18,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '21' # Matches your Dockerfile configuration
           cache: 'maven'
 
       - name: Run Backend Tests
@@ -27,18 +27,18 @@ jobs:
           chmod +x mvnw
           ./mvnw test 
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
+      - name: Install Koyeb CLI
+        run: curl https://raw.githubusercontent.com/koyeb/koyeb-cli/master/install.sh | sh
 
-      - name: Deploy to Railway
+      - name: Deploy to Koyeb
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
         run: |
-          cd backend
-          railway up --detach --service doctor-appointment-booking-application
+          # This triggers a redeploy of the existing service we set up in the dashboard
+          ~/bin/koyeb service redeploy doctor-appointment-booking-application
 
       - name: Deployment Complete
-        run: echo "✅ Backend deployed to Railway"
+        run: echo "✅ Backend deployed to Koyeb"
 
   deploy-frontend:
     name: Deploy Frontend to Vercel
@@ -63,7 +63,8 @@ jobs:
       - name: Build Expo Web
         run: |
           cd frontend
-          npx expo export --platform web
+          # Using your custom build script to trigger post-export.js
+          npm run build 
 
       - name: Deploy to Vercel
         env:
@@ -72,10 +73,9 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
            npm install -g vercel@latest
-            cd frontend
-            # Use the --prebuilt flag to skip Vercel's internal npm install/build
-            # This uploads the 'dist' folder you just created with Expo
-            vercel deploy ./dist --prod --token=$VERCEL_TOKEN --yes   
+           cd frontend
+           # Upload the 'dist' folder which now has the /assets/vendor/ fix
+           vercel deploy ./dist --prod --token=$VERCEL_TOKEN --yes   
       
       - name: Deployment Complete
         run: echo "✅ Frontend deployed to Vercel"

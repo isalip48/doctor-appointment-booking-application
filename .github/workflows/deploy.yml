@@ -34,7 +34,7 @@ jobs:
         env:
           KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
         run: |
-          koyeb service redeploy your-service-name/your-app-name
+          koyeb service redeploy logical-daryn/doctor-appointment-booking-application
 
       - name: Deployment Complete
         run: echo "✅ Backend deployed to Koyeb"

@@ -9,7 +9,7 @@ A full-stack web application for booking doctor appointments with AI-powered med
 ## 🌐 Live Demo
 
 - **Frontend:** [https://doctor-appointment-booking-applicat-gamma.vercel.app](https://doctor-appointment-booking-applicat-gamma.vercel.app)
-- **Backend API:** [https://doctor-appointment-booking-application-production.up.railway.app/api](https://doctor-appointment-booking-application-production.up.railway.app/api)
+- **Backend API:** 
 
 ---
 
@@ -44,7 +44,7 @@ A full-stack web application for booking doctor appointments with AI-powered med
 - **Database:** PostgreSQL
 - **ORM:** Hibernate/JPA
 - **Build Tool:** Maven
-- **Deployment:** Railway
+- **Deployment:** Koyeb
 
 ### Frontend
 
@@ -60,9 +60,9 @@ A full-stack web application for booking doctor appointments with AI-powered med
 
 - **CI/CD:** GitHub Actions
 - **Version Control:** Git & GitHub
-- **Backend Hosting:** Railway
+- **Backend Hosting:** Koyeb
 - **Frontend Hosting:** Vercel
-- **Database:** Railway PostgreSQL
+- **Database:** Koyeb PostgreSQL
 
 ---
 
@@ -388,7 +388,7 @@ Patients can book without creating an account.
 Every push to the `main` branch automatically:
 
 - ✅ Runs backend tests
-- ✅ Deploys backend to Railway
+- ✅ Deploys backend to Koyeb
 - ✅ Builds frontend
 - ✅ Deploys frontend to Vercel
 
@@ -398,12 +398,12 @@ GitHub Actions Workflow: `.github/workflows/deploy.yml`
 
 ### Manual Deployment
 
-**Deploy Backend to Railway**
+**Deploy Backend to Koyeb**
 
 ```bash
 cd backend
-railway login
-railway up --detach
+Koyeb login
+Koyeb up --detach
 ```
 
 **Deploy Frontend to Vercel**
@@ -417,7 +417,7 @@ vercel --prod
 
 ## 🔧 Environment Variables
 
-### Backend (Railway)
+### Backend (Koyeb)
 
 ```env
 DATABASE_URL=postgresql://...
@@ -429,7 +429,7 @@ PORT=8080
 ### Frontend (Vercel)
 
 ```env
-EXPO_PUBLIC_API_URL=https://your-backend-url.railway.app/api
+EXPO_PUBLIC_API_URL=https://your-backend-url.Koyeb.app/api
 EXPO_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
 ```
 
@@ -502,7 +502,7 @@ Dr. Jane Smith,Dermatologist,Asiri Hospital,+94772345678,jane@hospital.lk,8 year
 - [React Native](https://reactnative.dev/)
 - [Expo](https://expo.dev/)
 - [Google Gemini AI](https://deepmind.google/technologies/gemini/)
-- [Railway](https://railway.app/)
+- [Koyeb](https://Koyeb.app/)
 - [Vercel](https://vercel.com/)
 
 ---

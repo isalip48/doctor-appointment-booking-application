@@ -29,16 +29,13 @@ jobs:
 
       - name: Install Koyeb CLI
         run: |
-          # Use the official installer
           curl -fsSL https://raw.githubusercontent.com/koyeb/koyeb-cli/master/install.sh | sh
-          # Add the install directory to the GitHub Actions PATH
           echo "$HOME/.koyeb/bin" >> $GITHUB_PATH
 
       - name: Deploy to Koyeb
         env:
           KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
         run: |
-          # Now 'koyeb' will be found because we updated the PATH above
           koyeb service redeploy logical-daryn/doctor-appointment-booking-application
 
       - name: Deployment Complete
@@ -64,20 +61,21 @@ jobs:
           cd frontend
           npm ci
 
+      - name: Build Expo Web
+        run: |
+          cd frontend
+          npx expo export --platform web
+          node post-export.js
+
       - name: Deploy to Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-           npm install -g vercel@latest
-           cd frontend
-           # First, safely link the project inside the action container
-           vercel pull --yes --environment=production --token=$VERCEL_TOKEN
-           # Second, securely run the Vercel Build Step locally (which triggers our npm run build and packaging)
-           vercel build --prod --token=$VERCEL_TOKEN
-           # Finally, upload exactly the compiled Vercel Output API securely to production
-           vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN --yes
+          npm install -g vercel@latest
+          cd frontend
+          vercel deploy ./dist --prod --token=$VERCEL_TOKEN --yes
 
       - name: Deployment Complete
         run: echo "✅ Frontend deployed to Vercel"

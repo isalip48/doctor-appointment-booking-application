@@ -9,7 +9,7 @@ A full-stack web application for booking doctor appointments with AI-powered med
 ## 🌐 Live Demo
 
 - **Frontend:** [https://doctor-appointment-booking-applicat-gamma.vercel.app](https://doctor-appointment-booking-applicat-gamma.vercel.app)
-- **Backend API:** 
+- **Backend API:** [https://logical-daryn-isali-5d5dbabe.koyeb.app](https://logical-daryn-isali-5d5dbabe.koyeb.app)
 
 ---
 

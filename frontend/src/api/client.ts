@@ -1,20 +1,12 @@
 import axios from 'axios';
-
 /**
  * Axios Instance
  * 
  * WHY: Centralized HTTP client with base configuration
  * BENEFIT: Don't repeat URL and headers in every API call
  */
-
-// CHANGE THIS BASED ON YOUR SETUP
 const getBaseURL = () => {
-  // For Android Emulator: use 10.0.2.2
-  // For iOS Simulator: use localhost
-  // For Physical Device: use your computer's IP (e.g., 192.168.1.100)
-  
-  // Uncomment the one you need:
-  return 'http://192.168.1.10:8080/api';  // Physical Device
+  return process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080/api';
 };
 
 /**
@@ -30,7 +22,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 seconds
+  timeout: 10000,
 });
 
 /**
